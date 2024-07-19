@@ -1,9 +1,6 @@
 import numpy as np
 
-<<<<<<< HEAD
 
-=======
->>>>>>> c38ecb4 (initial neural network skecth yet without backpropagation)
 def activation_ReLU(Z):
     return Z if Z >= 0 else 0
 
@@ -14,11 +11,7 @@ def calculate_MSE(losses):
     mse_error/=len(losses)
     return mse_error
 
-<<<<<<< HEAD
-class Percetron:
-=======
 class Perceptron:
->>>>>>> c38ecb4 (initial neural network skecth yet without backpropagation)
     def __init__(self, learning_rate=0.001, n_features=0):
         self.features= n_features
         self.learning_rate= learning_rate
@@ -26,12 +19,9 @@ class Perceptron:
         self.loss= np.random.rand(n_features)
         self.bias= np.random.randint(2)
 
-<<<<<<< HEAD
-=======
     def activation_ReLU(Z):
         return Z if Z >= 0 else 0
 
->>>>>>> c38ecb4 (initial neural network skecth yet without backpropagation)
     #aplica funcao de dot product a usa funcao de ativacao ReLU
     def fit(self, X, Z=0):
         for weight in (self.weights):
@@ -57,14 +47,11 @@ labels=np.array([0,0,0,1])
 
 epochs=100
 num_features=len(features)
-<<<<<<< HEAD
-p1 = Percetron(n_features = num_features)
+p1=Perceptron(learning_rate=0.01, n_features=num_features)
 
 class TrainPerceptron:
     def __init__(self, model):
         self.model= model
-=======
-p1 = Perceptron(n_features = num_features)
 
 class TrainPerceptron:
     def __init__(self, model, features, labels):
@@ -72,17 +59,12 @@ class TrainPerceptron:
         self.labels=labels
         self.model=model
         self.losses=[]
->>>>>>> c38ecb4 (initial neural network skecth yet without backpropagation)
         self.predictions=[]
 
     def training_loop(self):
         for epoch in range(epochs):
             losses=[]
-<<<<<<< HEAD
             for X, y in zip(features, labels):
-=======
-            for X, y in zip(self.features, self.labels):
->>>>>>> c38ecb4 (initial neural network skecth yet without backpropagation)
 
                 #calculate the sum product and do the activation function
                 prediction=self.model.fit(X)
@@ -90,37 +72,21 @@ class TrainPerceptron:
 
                 #calculate the error of that prediction 
                 loss=self.model.calculate_error(prediction, label=y)
-<<<<<<< HEAD
                 losses.append(loss)
-=======
                 self.losses.append(loss)
->>>>>>> c38ecb4 (initial neural network skecth yet without backpropagation)
 
                 #optimize model parameters
                 for x in X:
                     self.model.weights += self.model.learning_rate * loss * x
-                self.model.bias += self.model.learning_rate * loss
-<<<<<<< HEAD
+                    self.model.bias += self.model.learning_rate * loss
 
     
-    def predict(self):
-        print(self.predictions)
+    def predict(self, preds):
+        #print(self.predictions)
+        print(self.losses)
         return self.predictions
 
-train_perceptron= TrainPerceptron(model=p1)
+train_perceptron=TrainPerceptron(model=p1, features=features, labels=labels)
 preds=train_perceptron.training_loop()
-=======
-        return prediction
+train_perceptron.predict(preds)
 
-    
-    #def predict(self, preds):
-        #print(preds)
-        #print(self.predictions)
-        #print(self.losses)
-        #return self.predictions
-
-train_perceptron= TrainPerceptron(model=p1, features=features, labels=labels)
-preds=train_perceptron.training_loop()
-#train_perceptron.predict(preds)
-
->>>>>>> c38ecb4 (initial neural network skecth yet without backpropagation)
