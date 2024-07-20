@@ -51,14 +51,24 @@ class MultilayerPerceptron():
             predictions.append(activation_leaky_ReLU(preds))
         return predictions
     
+    #the calculation of the mse loss 
     def CalculateLoss(self, predictions, errors=[], mse_loss=0):
         for label, pred in zip(labels, predictions):
             error=pred-label
             errors.append(error)
         mse_loss=calculate_MSE(losses=errors)
         return mse_loss
-    
-    #def Backpropagation(self):
+
+    #the backpropagation algorithm and its gradient descent calculus
+    def Backpropagation(self, prediction):
+        if prediction <= 0:
+            return 0
+        else:
+            prediction
+
+
+
+
 
 
 nn=MultilayerPerceptron()
@@ -74,5 +84,3 @@ class TrainMLP():
            in_hidden_features=nn.hidden_layer(predictions=in_hidden_features, hidden_nodes=4)
            in_activation_features=nn.activation_layer(new_preds=in_hidden_features)
            mse_Loss=nn.CalculateLoss(predictions=in_activation_features)
-
-           losses.append(mse_Loss)

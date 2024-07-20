@@ -89,4 +89,5 @@ class TrainPerceptron:
 train_perceptron=TrainPerceptron(model=p1, features=features, labels=labels)
 preds=train_perceptron.training_loop()
 train_perceptron.predict(preds)
+#print(preds)
 
