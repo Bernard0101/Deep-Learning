@@ -77,14 +77,13 @@ class TrainPerceptron:
                     self.model.weights += self.model.learning_rate * loss * x
                     self.model.bias += self.model.learning_rate * loss
 
+
     
-    def predict(self, preds):
-        #print(self.predictions)
-        print(self.losses)
+    def predict(self):
         return self.predictions
 
 train_perceptron=TrainPerceptron(model=p1, features=features, labels=labels)
 preds=train_perceptron.training_loop()
-train_perceptron.predict(preds)
+train_perceptron.predict()
 #print(preds)
 

@@ -28,26 +28,26 @@ class MultilayerPerceptron():
     def __init__(self, input_nodes, hidden_layers=1, hidden_nodes=8):
         self.input_weigths=np.random.rand(len(features)*input_nodes)
         self.hidden_weigths=np.random.rand(hidden_nodes*hidden_layers)
-        self.weights=self.input_weigths+self.hidden_weigths
 
 
     #the initial input layer with two nodes each with weights eqauling to the number 
     #of features needed to be predicted and outputing two number that will feed the next layer
     def input_layer(self, input_nodes=2, out_features=[]):
         for node in range(input_nodes):
-            predictions=pt.training_loop()
+            predictions=pt.predict()
             out_features.append(predictions)
         return out_features
             
-    #first hidden layer, with inputs of the previous two layers, outputing 
+    #hidden layer, with inputs of the previous two layers, outputing 
     def hidden_layer(self, predictions, hidden_nodes, out_hidden_features=[]):
         bias=np.random.randint(7)
         for node in range(hidden_nodes):
             Z=0
             for index, preds in enumerate(predictions):
-                Z+=preds*self.hidden_weights[index]
+                Z+=preds*self.hidden_weigths[index+(node*len(predictions))]
             Z+=bias
             out_hidden_features.append(Z)
+        out_hidden_features=np.squeeze(out_hidden_features)
         return out_hidden_features
     
     #the activation layer of the neural network
@@ -88,3 +88,6 @@ class TrainMLP():
            in_hidden_features=nn.hidden_layer(predictions=in_hidden_features, hidden_nodes=4)
            in_activation_features=nn.activation_layer(out_hidden_features=in_hidden_features)
            mse_Loss=nn.CalculateLoss(predictions=in_activation_features)
+
+nn_train=TrainMLP(epochs=10, model=nn)
+nn_train.training()
