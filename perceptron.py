@@ -13,11 +13,11 @@ def calculate_MSE(losses):
 
 class Perceptron:
     def __init__(self, learning_rate=0.001, n_features=0):
-        self.features= n_features
-        self.learning_rate= learning_rate
-        self.weights= np.random.rand(n_features)
-        self.loss= np.random.rand(n_features)
-        self.bias= np.random.randint(2)
+        self.features=n_features
+        self.learning_rate=learning_rate
+        self.weights=np.random.rand(n_features)
+        self.loss=np.random.rand(n_features)
+        self.bias=np.random.randint(2)
 
     def activation_ReLU(Z):
         return Z if Z >= 0 else 0
@@ -49,9 +49,6 @@ epochs=100
 num_features=len(features)
 p1=Perceptron(learning_rate=0.01, n_features=num_features)
 
-class TrainPerceptron:
-    def __init__(self, model):
-        self.model= model
 
 class TrainPerceptron:
     def __init__(self, model, features, labels):
