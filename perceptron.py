@@ -23,7 +23,8 @@ class Perceptron:
         return Z if Z >= 0 else 0
 
     #aplica funcao de dot product a usa funcao de ativacao ReLU
-    def fit(self, X, Z=0):
+    def predict(self, X, Z=0):
+        Z=0
         for weight in (self.weights):
             for x in X:
                 Z+= weight * x
@@ -58,14 +59,13 @@ class TrainPerceptron:
         self.losses=[]
         self.predictions=[]
 
-    def training_loop(self):
+    def predict(self):
         for epoch in range(epochs):
             losses=[]
             for X, y in zip(features, labels):
 
                 #calculate the sum product and do the activation function
-                prediction=self.model.fit(X)
-                self.predictions.append(prediction)
+                prediction=self.model.predict(X)
 
                 #calculate the error of that prediction 
                 loss=self.model.calculate_error(prediction, label=y)
@@ -77,13 +77,13 @@ class TrainPerceptron:
                     self.model.weights += self.model.learning_rate * loss * x
                     self.model.bias += self.model.learning_rate * loss
 
+            #add the final prediction to the predictions
+            self.predictions.append(prediction)
+        return self.predictions[-1]
 
-    
-    def predict(self):
-        return self.predictions
+
 
 train_perceptron=TrainPerceptron(model=p1, features=features, labels=labels)
-preds=train_perceptron.training_loop()
-train_perceptron.predict()
+preds=train_perceptron.predict()
 #print(preds)
 
