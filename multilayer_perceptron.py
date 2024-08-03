@@ -25,40 +25,42 @@ def calculate_MSE(losses, mse_error=0):
     return mse_error
 
 class MultilayerPerceptron():
-    def __init__(self, input_nodes=1, hidden_layers=1, hidden_nodes=8):
+    def __init__(self, n_features=len(features), input_nodes=2, hidden_layers=2, hidden_nodes=3):
         self.input_nodes=input_nodes
         self.hidden_layers=hidden_layers
-        self.input_weights=np.random.rand(len(features)*input_nodes)
-        self.hidden_weights=np.random.rand(hidden_nodes*hidden_layers*features.shape[1])
+        self.input_weights=np.random.rand(n_features, input_nodes)
+        self.hidden_weights=[np.random.rand(input_nodes if i == 0 else hidden_nodes, hidden_nodes) for i in range(hidden_layers)]
+        self.bias=np.random.randint(10)
 
 
-    #the initial input layer with two nodes each with weights eqauling to the number 
-    #of features needed to be predicted and outputing two number that will feed the next layer
+    #input node, that returns a list of predictions with the size of input nodes
     def input_layer(self, input_nodes=2, out_features=[]):
         for node in range(input_nodes):
             predictions=pt.predict()
             out_features.append(predictions)
         return out_features
             
-    #hidden layer, with inputs of the previous two layers, outputing 
-    def hidden_layer(self, predictions, hidden_nodes, out_hidden_features=[]):
-        bias=np.random.randint(7)
+
+    #hidden layer, that returns a list of the new predictions with the size of hidden nodes
+    def hidden_layer(self, predictions=[], hidden_nodes=1, layer=0,  out_hidden_features=[]):
         for node in range(hidden_nodes):
             Z=0
             for index, preds in enumerate(predictions):
-                Z+=preds*self.hidden_weights
-            Z+=bias
+                
+                Z+=preds*self.hidden_weights[layer][index, node]
+            Z+=self.bias
             out_hidden_features.append(Z)
         out_hidden_features=np.squeeze(out_hidden_features)
         return out_hidden_features
     
+
     #the activation layer of the neural network
     def activation_layer(self, out_hidden_features, predictions=[]):
-        bias=np.random.randint(7)
         for preds in out_hidden_features:
-            predictions.extend(activation_leaky_ReLU(preds))
+            predictions.append(activation_leaky_ReLU(preds))
         return predictions
     
+
     #the calculation of the mse loss 
     def CalculateLoss(self, predictions, errors=[], mse_loss=0):
         for label, pred in zip(labels, predictions):
@@ -76,7 +78,9 @@ class MultilayerPerceptron():
 
 
 
-nn=MultilayerPerceptron(input_nodes=2, hidden_layers=2)
+nn=MultilayerPerceptron(input_nodes=2, hidden_layers=2, hidden_nodes=3)
+print(nn.hidden_weights)
+
 
 class TrainMLP():
     def __init__(self, model, epochs=10):
@@ -84,20 +88,21 @@ class TrainMLP():
         self.epochs=epochs
     
     def training(self, losses=[]):
-        for epoch in range(self.epochs):
+        #for epoch in range(self.epochs):
 
-            #returns an array with the initial predictions that is the amount of features * the amount of nodes
+            #returns the array with 10 lists
             in_features=nn.input_layer(input_nodes=nn.input_nodes)
            # print(in_features)
 
+
             #receives those in_features that are an array and passes it to the next layer trough all of the nodes in it
-            for layer in range(nn.hidden_layers):
-                in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3)
+            in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=0)
+            in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=1)
+
 
             #receives the predictions from the hidden layers and activate using the activation function
             in_activation_features=nn.activation_layer(out_hidden_features=in_features)
             mse_Loss=nn.CalculateLoss(predictions=in_activation_features)
-            #print(mse_Loss)
 
 nn_train=TrainMLP(epochs=10, model=nn)
 nn_train.training()
