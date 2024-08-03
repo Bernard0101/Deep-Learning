@@ -35,8 +35,7 @@ class MultilayerPerceptron():
         self.hidden_layers=hidden_layers
         self.input_weights=np.random.rand(n_features, input_nodes)
         self.hidden_weights=[np.random.rand(input_nodes if i == 0 else hidden_nodes, hidden_nodes) for i in range(hidden_layers-1)]
-        self.bias=np.random.randint(10)
-
+        self.biases = [np.random.rand(hidden_nodes) for j in range(hidden_layers)] + [np.random.rand(1)]
 
     #input node, that returns a list of predictions with the size of input nodes
     def input_layer(self, input_nodes=2, out_features=[]):
@@ -53,7 +52,7 @@ class MultilayerPerceptron():
             for index, preds in enumerate(predictions):
                 
                 Z+=preds*self.hidden_weights[0][:, node]
-            Z+=self.bias
+            Z+=self.biases[-1]
             out_hidden_features.append(Z)
         out_hidden_features=np.squeeze(out_hidden_features)
         return out_hidden_features
@@ -100,7 +99,8 @@ class MultilayerPerceptron():
 
 
 nn=MultilayerPerceptron(input_nodes=2, hidden_layers=2, hidden_nodes=3)
-print(nn.hidden_weights)
+#print(nn.hidden_weights)
+#print(nn.biases)
 
 class TrainMLP():
     def __init__(self, model, epochs=10):
