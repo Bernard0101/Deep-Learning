@@ -46,12 +46,13 @@ class MultilayerPerceptron():
             
 
     #hidden layer, that returns a list of the new predictions with the size of hidden nodes
-    def hidden_layer(self, predictions=[], hidden_nodes=1, layer=0,  out_hidden_features=[]):
+    def hidden_layer(self, predictions, hidden_nodes=1, layer=0):
+        out_hidden_features=[]
         for node in range(hidden_nodes):
             Z=0
             for index, preds in enumerate(predictions):
-                
                 Z+=preds*self.hidden_weights[0][:, node]
+            Z=sum(Z)
             Z+=self.biases[-1]
             out_hidden_features.append(Z)
         out_hidden_features=np.squeeze(out_hidden_features)
@@ -66,7 +67,7 @@ class MultilayerPerceptron():
     
 
     #the calculation of the mse loss 
-    def CalculateLoss(self, predictions, errors=[], mse_Loss=0):
+    def Calculate_Loss(self, predictions, errors=[], mse_Loss=0):
         for label, pred in zip(labels, predictions):
             error=pred-label
             errors.append(error)
@@ -80,12 +81,13 @@ class MultilayerPerceptron():
 
         #all the hidden layers and also its activation functions
         in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=0)
-        in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=1)
-        in_activation_features=nn.activation_layer(out_hidden_features=in_features)
-        return in_activation_features
+        in_features=nn.activation_layer(out_hidden_features=in_features)
+        in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=6, layer=1)
+        in_features=nn.activation_layer(out_hidden_features=in_features)
+        out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=1, layer=2)
 
-
-
+        #the final prediction
+        return out_features
 
 
     #the backpropagation algorithm and its gradient descent calcculation
@@ -98,8 +100,8 @@ class MultilayerPerceptron():
 
 
 
-nn=MultilayerPerceptron(input_nodes=2, hidden_layers=2, hidden_nodes=3)
-#print(nn.hidden_weights)
+nn=MultilayerPerceptron(input_nodes=2, hidden_layers=2, hidden_nodes=6)
+print(nn.hidden_weights)
 #print(nn.biases)
 
 class TrainMLP():
@@ -112,9 +114,12 @@ class TrainMLP():
 
             #receives the predictions from the hidden layers and activate using the activation function
             y_pred=nn.Forward()
-            mse_Loss=nn.CalculateLoss(predictions=y_pred)
+
+
+            mse_Loss=nn.Calculate_Loss(predictions=y_pred)
             #nn.Backpropagation(predictions=y_pred)
+        print(y_pred)
 
 
-nn_train=TrainMLP(epochs=10, model=nn)
+nn_train=TrainMLP(epochs=1, model=nn)
 nn_train.training()
