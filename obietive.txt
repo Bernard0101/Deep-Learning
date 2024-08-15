@@ -1,0 +1,3 @@
+1. coreggere I pesi della rete
+2. coreggere la costruzzione della architetura del hidden layer
+3. continuare l`algoritmo de backpropagation

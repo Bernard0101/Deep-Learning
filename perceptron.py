@@ -19,9 +19,6 @@ class Perceptron:
         self.loss=np.random.rand(n_features)
         self.bias=np.random.randint(2)
 
-    def activation_ReLU(Z):
-        return Z if Z >= 0 else 0
-
     #aplica funcao de dot product a usa funcao de ativacao ReLU
     def predict(self, X, Z=0):
         Z=0
