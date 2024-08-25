@@ -27,9 +27,12 @@ def MSE_Loss_derivative(y_pred, y_label):
 
 #mse Loss
 def MSE_Loss(losses, mse_error=0):
-    for  error in losses:
-        mse_error+= error**2
-    mse_error/=len(losses)
+    if np.ndim(losses)!=0:
+        for  error in losses:
+            mse_error+= error**2
+        mse_error/=len(losses)
+    else:
+        
     return mse_error
 
 class MultilayerPerceptron():
@@ -38,7 +41,7 @@ class MultilayerPerceptron():
         self.input_nodes=input_nodes
         self.hidden_nodes=hidden_nodes
         self.input_weights=np.random.randn(n_features, input_nodes)
-        self.hidden_weights = [np.random.randn(hidden_nodes[idx], hidden_nodes[idx-1]) for idx in range(1, len(hidden_nodes))]
+        self.hidden_weights=np.array([np.random.randn(hidden_nodes[i], hidden_nodes[i-1])for i in range(1, len(hidden_nodes))], dtype=object)
         #self.biases=[np.random.randn(hidden_nodes) for j in range(hidden_layers)] + [np.random.rand(1)]
         
 
@@ -85,10 +88,13 @@ class MultilayerPerceptron():
 
     #the calculation of the mse loss 
     def Calculate_Loss(self, predictions, errors=[], mse_Loss=0):
-        for label, pred in zip(labels, predictions):
-            error=pred-label
-            errors.append(error)
-        mse_Loss=MSE_Loss(losses=errors)
+        if np.ndim(predictions)!=0:
+            for label, pred in zip(labels, predictions):
+                error=pred-label
+                errors.append(error)
+            mse_Loss=MSE_Loss(losses=errors)
+        else:
+            mse_Loss=MSE_Loss(losses=predictions)
         return mse_Loss
 
 
@@ -102,12 +108,14 @@ class MultilayerPerceptron():
         in_features=nn.activation_layer(out_hidden_features=in_features)
         in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=9, layer=2)
         in_features=nn.activation_layer(out_hidden_features=in_features)
-        out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=3)
+        in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=3)
+        in_features=nn.activation_layer(out_hidden_features=in_features)
+        out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=1, layer=4)
        # in_features=nn.activation_layer(out_hidden_features=in_features)
         #out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=3)
 
         #the final prediction
-        print(f"the final preds ff{out_features}")
+        print(f"\n\n\nthe final preds ff{out_features}")
         return out_features
 
 
@@ -116,6 +124,16 @@ class MultilayerPerceptron():
         derivata_perdita=MSE_Loss_derivative(y_pred=predictions, y_label=labels)
         derivata_ativazzione=activation_leaky_ReLU_derivative(Z=predictions)
         gradiente_errori=derivata_perdita*derivata_ativazzione
+        print(f"gradiente: {gradiente_errori}")
+        for node in reversed(range(len(self.hidden_weights))):
+            print(f"\n\n\n{node}")
+            for weights in self.hidden_weights[node]:
+               print(f"\n{weights}")
+               #new_weigths=weights-learning_rate*gradiente_errori
+               print(new_weigths)
+
+            
+
 
         
 
@@ -124,9 +142,9 @@ class MultilayerPerceptron():
 
 
 
-nn=MultilayerPerceptron(input_nodes=2, hidden_nodes=[2, 3, 9, 3], hidden_layers=4)
-print(f"input weights: \n\n {nn.input_weights}\n\n")
-print(f"hidden_weights: \n\n {nn.hidden_weights}\n\n")
+nn=MultilayerPerceptron(input_nodes=2, hidden_nodes=[2, 3, 9, 3, 1], hidden_layers=4)
+print(f"input weights: \n\n {nn.input_weights}\n shape: {nn.input_weights.shape}\n type: {type(nn.input_weights)}\n\n")
+print(f"hidden_weights: \n\n {nn.hidden_weights}\n shape: {nn.hidden_weights.shape}\n type: {type(nn.hidden_weights)}\n\n")
 
 class TrainMLP():
     def __init__(self, model, epochs=10, learning_rate=0.01):
