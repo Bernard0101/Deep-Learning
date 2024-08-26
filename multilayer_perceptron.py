@@ -15,6 +15,7 @@ pt=TrainPerceptron(model=p, features=features, labels=labels)
 
 #the derivative of leaky ReLU
 def activation_leaky_ReLU_derivative(Z, alpha=0.01):
+    print(f"Z: {Z}")
     return alpha if Z.all() < 0 else 1
 
 #Leaky ReLU
@@ -23,6 +24,7 @@ def activation_leaky_ReLU(z, alpha=0.01):
 
 #the derivative of mse loss
 def MSE_Loss_derivative(y_pred, y_label):
+    print(f"\n\npred: {y_pred}, label:{y_label}")
     return y_pred-y_label
 
 #mse Loss
@@ -32,7 +34,7 @@ def MSE_Loss(losses, mse_error=0):
             mse_error+= error**2
         mse_error/=len(losses)
     else:
-        
+        mse_error=losses
     return mse_error
 
 class MultilayerPerceptron():
@@ -123,14 +125,14 @@ class MultilayerPerceptron():
     def Backpropagation(self, predictions, learning_rate):
         derivata_perdita=MSE_Loss_derivative(y_pred=predictions, y_label=labels)
         derivata_ativazzione=activation_leaky_ReLU_derivative(Z=predictions)
+        #print(f"perdita: {derivata_perdita}, ativazzione: {derivata_ativazzione}")
         gradiente_errori=derivata_perdita*derivata_ativazzione
-        print(f"gradiente: {gradiente_errori}")
-        for node in reversed(range(len(self.hidden_weights))):
+        print(f"\n\ngradiente: {gradiente_errori}")
+        for node in reversed(self.hidden_nodes):
             print(f"\n\n\n{node}")
             for weights in self.hidden_weights[node]:
-               print(f"\n{weights}")
-               #new_weigths=weights-learning_rate*gradiente_errori
-               print(new_weigths)
+                print(f"\n{weights}")
+
 
             
 
