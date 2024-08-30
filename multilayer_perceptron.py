@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 #the dataset and it`s preprocessing
-data = pd.read_csv('dataset.csv')
+data = pd.read_csv('salary_data_with_noise.csv')
 features = data[['Age', 'Education']].values
 labels = data['Salary'].values
 
@@ -25,14 +25,15 @@ def activation_leaky_ReLU(z, alpha=0.01):
 #the derivative of mse loss
 def MSE_Loss_derivative(y_pred, y_label):
    # print(f"\n\npred: {y_pred}, label:{y_label[0]}")
-    return y_pred-y_label[0]
+    return np.mean((y_label-y_pred)**2)
 
 #mse Loss
 def MSE_Loss(losses, mse_error=0):
     if np.ndim(losses)!=0:
-        mse_error=np.mean(losses ** 2)
+        
+        mse_error=np.mean((losses-labels) ** 2)
     else:
-        mse_error=losses
+        mse_error=np.mean(losses**2)
     return mse_error
 
 class MultilayerPerceptron():
@@ -41,8 +42,8 @@ class MultilayerPerceptron():
         self.input_nodes=input_nodes
         self.hidden_nodes=hidden_nodes
         self.input_weights=np.random.randn(n_features, input_nodes)
-        self.hidden_weights=np.array([np.random.randn(hidden_nodes[i], hidden_nodes[i-1])for i in range(1, len(hidden_nodes))], dtype=object)
-        #self.biases=[np.random.randn(hidden_nodes) for j in range(hidden_layers)] + [np.random.rand(1)]
+        self.hidden_weights=np.array([np.random.randn(hidden_nodes[i], hidden_nodes[i-1]) for i in range(1, len(hidden_nodes))], dtype=object)
+        self.biases=[np.random.randn(hidden_layers) for j in range(1, len(hidden_nodes))] + [np.random.rand(1)]
         
 
     #input node, that returns a list of predictions with the size of input nodes
@@ -64,7 +65,7 @@ class MultilayerPerceptron():
             Z=0
             #print(f"\nlayer:{layer}\nnode:{node}\npredictions: \n{predictions},\nweights: \n{weights}")
             Z=np.dot(predictions, weights)
-            #Z+=self.biases[-1]
+            Z+=self.biases[-1]
             out_hidden_features.append(Z)
         out_hidden_features=np.squeeze(out_hidden_features)
         #print(f"out_features{out_hidden_features}")
@@ -110,9 +111,7 @@ class MultilayerPerceptron():
         in_features=nn.activation_layer(out_hidden_features=in_features)
         in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=9, layer=2)
         in_features=nn.activation_layer(out_hidden_features=in_features)
-        in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=3)
-        in_features=nn.activation_layer(out_hidden_features=in_features)
-        out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=1, layer=4)
+        out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=3)
        # in_features=nn.activation_layer(out_hidden_features=in_features)
         #out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=3)
 
@@ -120,42 +119,28 @@ class MultilayerPerceptron():
         #print(f"\n\n\nthe final preds ff{out_features}")
         return out_features
 
-
+                    #derivata_perdita=MSE_Loss_derivative(y_pred=predictions, y_label=labels)
+                    #derivata_ativazzione=activation_leaky_ReLU_derivative(Z=predictions)
+                    #gradiente_errori=derivata_perdita*derivata_ativazzione
     #the backpropagation algorithm and its gradient descent calcculation
     def Backpropagation(self, predictions, learning_rate):
-        #print("iniziando l`algritmo de backpropagation\n\n\n")
-        for hidden_layer in range(self.hidden_layers, 0, -1):
-            #print(f"_____________________________\nlayer: {hidden_layer+1}\n")
-            for idx_node, node in enumerate(self.hidden_weights[hidden_layer]):
-                #print(f"node: {idx_node+1}\n\n")
-                for idx_weight, weight in enumerate(node):
-                    derivata_perdita=MSE_Loss_derivative(y_pred=weight, y_label=labels)
-                    derivata_ativazzione=activation_leaky_ReLU_derivative(Z=weight)
-                    gradiente_errori=derivata_perdita*derivata_ativazzione
-                    #print(weight)
-                    #print(f"gradiente discendente: {gradiente_errori}\n\n\n")
-                    new_weight=weight-learning_rate*gradiente_errori
-                    self.hidden_weights[hidden_layer][idx_node][idx_weight]=new_weight
-        #print(self.hidden_weights)
-        return self.hidden_weights
-                                
-                    
-
+        derivata_perdita=MSE_Loss_derivative(y_pred=predictions, y_label=labels)
+        for node in(i for i in range(len(self.hidden_nodes)-1, 0, -1)):
+            print(node)
+            for weights in (self.hidden_weights[node-1]):
+                print(weights)
+                derivata_ativazzione=activation_leaky_ReLU_derivative(Z=weights)
+                gradiente_discendente=derivata_perdita*derivata_ativazzione
+                
 
             
 
 
         
-
-
-
-
-
-
-nn=MultilayerPerceptron(input_nodes=2, hidden_nodes=[2, 3, 9, 3, 1], hidden_layers=3)
-#print(f"hidden_nodes: \n\n {nn.hidden_nodes}\n\n")
-#print(f"input weights: \n\n {nn.input_weights}\n shape: {nn.input_weights.shape}\n type: {type(nn.input_weights)}\n\n")
-#print(f"hidden_weights: \n\n {nn.hidden_weights}\n shape: {nn.hidden_weights.shape}\n type: {type(nn.hidden_weights)}\n\n")
+nn=MultilayerPerceptron(input_nodes=2, hidden_nodes=[2, 3, 9, 3], hidden_layers=2)
+print(f"hidden_nodes: \n\n {nn.hidden_nodes}\n\n")
+print(f"input weights: \n\n {nn.input_weights}\n shape: {nn.input_weights.shape}\n type: {type(nn.input_weights)}\n\n")
+print(f"hidden_weights: \n\n {nn.hidden_weights}\n shape: {nn.hidden_weights.shape}\n type: {type(nn.hidden_weights)}\n\n")
 
 class TrainMLP():
     def __init__(self, model, epochs=10, learning_rate=0.01):
@@ -181,5 +166,5 @@ class TrainMLP():
             
 
 
-nn_train=TrainMLP(epochs=10, model=nn)
+nn_train=TrainMLP(epochs=1, model=nn)
 nn_train.training()

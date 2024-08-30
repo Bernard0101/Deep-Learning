@@ -1,3 +1,0 @@
-1. coreggere I pesi della rete -----OK
-2. coreggere la costruzzione della architetura del hidden layer ----- OK
-3. continuare l`algoritmo de backpropagation ----- in processo
