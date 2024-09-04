@@ -15,8 +15,8 @@ pt=TrainPerceptron(model=p, features=features, labels=labels)
 
 #the derivative of leaky ReLU
 def activation_leaky_ReLU_derivative(Z, alpha=0.01):
-    #print(f"Z: {Z}")
-    return alpha if Z.all() < 0 else 1
+   # print(f"Z: {Z}")
+    return np.where(Z > 0, 1, alpha)
 
 #Leaky ReLU
 def activation_leaky_ReLU(z, alpha=0.01):
@@ -24,17 +24,14 @@ def activation_leaky_ReLU(z, alpha=0.01):
 
 #the derivative of mse loss
 def MSE_Loss_derivative(y_pred, y_label):
-   # print(f"\n\npred: {y_pred}, label:{y_label[0]}")
-    return np.mean((y_label-y_pred)**2)
+    #print(f"y_pred; {y_pred},y_label: {y_label}")
+    return (2 * (y_pred-y_label) / len(y_label))
 
 #mse Loss
-def MSE_Loss(losses, mse_error=0):
-    if np.ndim(losses)!=0:
-        
-        mse_error=np.mean((losses-labels) ** 2)
-    else:
-        mse_error=np.mean(losses**2)
-    return mse_error
+def MSE_Loss(y_pred, y_label):
+    mse_loss=np.mean((y_pred-y_label)**2)
+    #print(f"mse_loss: {mse_loss}")
+    return mse_loss
 
 class MultilayerPerceptron():
     def __init__(self, n_features=len(features), input_nodes=2, hidden_layers=5, hidden_nodes=[3]):
@@ -42,7 +39,7 @@ class MultilayerPerceptron():
         self.input_nodes=input_nodes
         self.hidden_nodes=hidden_nodes
         self.input_weights=np.random.randn(n_features, input_nodes)
-        self.hidden_weights=np.array([np.random.randn(hidden_nodes[i], hidden_nodes[i-1]) for i in range(1, len(hidden_nodes))], dtype=object)
+        self.hidden_weights=np.array([np.random.randn(hidden_nodes[i], hidden_nodes[i-1]) * 0.01 for i in range(1, len(hidden_nodes))], dtype=object)
         self.biases=[np.random.randn(hidden_layers) for j in range(1, len(hidden_nodes))] + [np.random.rand(1)]
         
 
@@ -89,15 +86,8 @@ class MultilayerPerceptron():
     
 
     #the calculation of the mse loss 
-    def Calculate_Loss(self, predictions, errors=[], mse_Loss=0):
-        if np.ndim(predictions)!=0:
-            for label, pred in zip(labels, predictions):
-                error=pred-label
-                errors.append(error)
-            mse_Loss=MSE_Loss(losses=errors)
-        else:
-            error=predictions-labels[2]
-            mse_Loss=MSE_Loss(losses=error)
+    def Calculate_Loss(self, predictions, mse_Loss=0):
+        mse_Loss=MSE_Loss(y_pred=predictions, y_label=labels)
         return mse_Loss
 
 
@@ -112,25 +102,20 @@ class MultilayerPerceptron():
         in_features=nn.hidden_layer(predictions=in_features, hidden_nodes=9, layer=2)
         in_features=nn.activation_layer(out_hidden_features=in_features)
         out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=3)
-       # in_features=nn.activation_layer(out_hidden_features=in_features)
-        #out_features=nn.hidden_layer(predictions=in_features, hidden_nodes=3, layer=3)
 
-        #the final prediction
-        #print(f"\n\n\nthe final preds ff{out_features}")
         return out_features
 
-                    #derivata_perdita=MSE_Loss_derivative(y_pred=predictions, y_label=labels)
-                    #derivata_ativazzione=activation_leaky_ReLU_derivative(Z=predictions)
-                    #gradiente_errori=derivata_perdita*derivata_ativazzione
-    #the backpropagation algorithm and its gradient descent calcculation
+    #the backpropagation algorithm and its gradient descent calculation
     def Backpropagation(self, predictions, learning_rate):
-        derivata_perdita=MSE_Loss_derivative(y_pred=predictions, y_label=labels)
-        for node in(i for i in range(len(self.hidden_nodes)-1, 0, -1)):
-            print(node)
-            for weights in (self.hidden_weights[node-1]):
-                print(weights)
-                derivata_ativazzione=activation_leaky_ReLU_derivative(Z=weights)
-                gradiente_discendente=derivata_perdita*derivata_ativazzione
+        derivata_perdita=MSE_Loss_derivative(y_pred=predictions, y_label=labels)#array=3
+        derivata_ativazione=activation_leaky_ReLU_derivative(Z=predictions)
+        for idx in range(len(self.hidden_weights)-1,-1,-1):
+            print(idx)
+            weights=self.hidden_weights.reshape(-1, 1)
+            gradiente_discendente=np.dot(weights, derivata_perdita)
+            gradiente_pesi=np.dot(self.hidden_weights[idx]-gradiente_discendente*learning_rate)
+            
+
                 
 
             
@@ -138,9 +123,9 @@ class MultilayerPerceptron():
 
         
 nn=MultilayerPerceptron(input_nodes=2, hidden_nodes=[2, 3, 9, 3], hidden_layers=2)
-print(f"hidden_nodes: \n\n {nn.hidden_nodes}\n\n")
-print(f"input weights: \n\n {nn.input_weights}\n shape: {nn.input_weights.shape}\n type: {type(nn.input_weights)}\n\n")
-print(f"hidden_weights: \n\n {nn.hidden_weights}\n shape: {nn.hidden_weights.shape}\n type: {type(nn.hidden_weights)}\n\n")
+#print(f"hidden_nodes: \n\n {nn.hidden_nodes}\n\n")
+#print(f"input weights: \n\n {nn.input_weights}\n shape: {nn.input_weights.shape}\n type: {type(nn.input_weights)}\n\n")
+#print(f"hidden_weights: \n\n {nn.hidden_weights}\n shape: {nn.hidden_weights.shape}\n type: {type(nn.hidden_weights)}\n\n")
 
 class TrainMLP():
     def __init__(self, model, epochs=10, learning_rate=0.01):
@@ -149,22 +134,22 @@ class TrainMLP():
         self.learning_rate=learning_rate
     
     def training(self, losses=[]):
-        for epoch in range(self.epochs):
-            #feedforward
-            y_pred=nn.Forward()
-            #print("\n\n\n\n--------------------------------------------------------")
-            #print(f"final predictions: {y_pred}")
+    #for epoch in range(self.epochs):
+        #feedforward
+        y_pred=nn.Forward()
+        print("\n\n\n\n--------------------------------------------------------")
+        print(f"final predictions: {y_pred}")
 
-            #calculate the loss
-            mse_Loss=nn.Calculate_Loss(predictions=y_pred)
-            #print(f"mse Loss: {mse_Loss}")
-
-
-            nn.Backpropagation(predictions=y_pred, learning_rate=self.learning_rate)
-            if epoch % 2 == 0:
-                print(f"epoch: {epoch}| predictions: {y_pred}| loss: {mse_Loss}")
-            
+        #calculate the loss
+        mse_Loss=nn.Calculate_Loss(predictions=y_pred)
+        print(f"mse Loss: {mse_Loss}\n\n\n")
 
 
-nn_train=TrainMLP(epochs=1, model=nn)
+        nn.Backpropagation(predictions=y_pred, learning_rate=self.learning_rate)
+        #if epoch % 2 == 0:
+        #    print(f"epoch: {epoch}| predictions: {y_pred}| loss: {mse_Loss}")
+        
+
+
+nn_train=TrainMLP(epochs=1, model=nn, learning_rate=0.001)
 nn_train.training()
