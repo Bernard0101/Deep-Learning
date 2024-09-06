@@ -8,7 +8,7 @@ class nn_functions:
     def activation_ReLU(Z):
         return Z if Z >= 0 else 0
 
-    def activation_ReLU_derivative(self, Z):
+    def activation_ReLU_derivative(Z):
         return Z if Z>=0 else 0
 
     #Leaky ReLU variant
@@ -21,12 +21,14 @@ class nn_functions:
 
 
     #mse Loss
-    def Loss_MSE(self, y_pred, y_label):
-        mse_loss=np.mean((y_pred-y_label)**2)
-        return mse_loss
+    def Loss_MSE(y_pred, y_label):
+        return np.mean((y_pred-y_label)**2)
         
         #the derivative of mse loss
-    def Loss_MSE_derivative(self, y_pred, y_label):
-        return (2 * (y_pred-y_label) / len(y_label))
+    def Loss_MSE_derivative(y_pred, y_label):
+        return np.mean(2 * (y_pred-y_label))
+
+    def Loss_MAE(y_pred, y_label):
+        return np.mean(y_pred-y_label)
     
 functions=nn_functions()
