@@ -45,11 +45,11 @@ class MultilayerPerceptron():
 
     #input node, that returns a list of predictions with the size of input nodes
     def input_layer(self, input_nodes=1):
-        out_features=[]
-        for i in range(input_nodes):
-            predictions=pt.predict()
-            out_features.append(predictions)
-        #print(f"input weights: \n{out_features}")
+        out_input_features=[]
+        for node in range(input_nodes):
+            for f in features:
+                Z=self.input_weights[node]*f
+                out_input_features.append(Z)
         return out_features
             
 
@@ -153,3 +153,15 @@ class TrainMLP():
 
 nn_train=TrainMLP(epochs=1, model=nn, learning_rate=0.001)
 nn_train.training()
+
+
+
+
+
+
+
+
+def input_layer(self, batch):
+        Z=np.dot(self.input_weights, batch)
+        print(f"Z: {Z}")
+        return 
