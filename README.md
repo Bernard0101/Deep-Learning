@@ -23,7 +23,7 @@ Il progetto è organizzato in diversi file che implementano la rete neurale e i 
   3. **Allenamento della rete**: Una classe separata che gestisce il ciclo di allenamento della rete neurale, utilizzando l'algoritmo di Stochastic Gradient Descent (SGD).
 
 - **`Perceptron.py`**: Un'implementazione di un Perceptron, il modello di base di una rete neurale, con i suoi metodi e funzioni.
-  
+- **`function.py`**: dove tissono tutte le funzione e algoritmi matematici utilizati.
 - **`Dataset_Dilatazione_Termica.csv`**: Il dataset utilizzato per addestrare la rete neurale. Il dataset contiene informazioni sulla variazione della lunghezza in base a diverse condizioni fisiche, che la rete imparerà a modellare.
 
 ## 4. Funzionalità Future
