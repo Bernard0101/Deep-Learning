@@ -6,10 +6,10 @@ class nn_functions:
 
     #ReLU function
     def activation_ReLU(Z):
-        return Z if Z >= 0 else 0
+        return np.maximum(0, Z)
 
     def activation_ReLU_derivative(Z):
-        return Z if Z>=0 else 0
+        return np.where(Z > 0, 1, 0)
 
     #Leaky ReLU variant
     def activation_leaky_ReLU(Z, alpha=0.01):

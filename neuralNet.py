@@ -100,15 +100,15 @@ class neuralNet():
 
 
     def Calculate_Loss(self, target, prediction, function):
-        if(function=="MSE"):
+        if(function == "MSE"):
             MSE_Loss=nn_func.Loss_MSE(y_pred=prediction, y_label=target)
             return MSE_Loss
-        if (function=="MAE"):
+        if (function == "MAE"):
             MAE_Loss=nn_func.Loss_MAE(y_pred=prediction, y_label=target)
             return MAE_Loss
 
 
-    def Backward(self, prediction, target, learning_rate=0.01):
+    def Backward(self, prediction, target, learning_rate=0.001):
         
         #calculo del gradiente discendente de uscita 
         derivata_perdita=nn_func.Loss_MSE_derivative(y_pred=prediction, y_label=target)

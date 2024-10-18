@@ -1,0 +1,9 @@
+Materiale,Lunghezza Iniziale,Coefficiente,Temperatura Iniziale,Temperatura Finale,Variazione di Lunghezza
+Acciaio,4.06,1.2e-05,1.6,66.08,0.003141
+Alluminio,3.38,2.3e-05,9.24,125.41,0.009031
+Rame,5.92,1.7e-05,8.93,141.7,0.013362
+Vetro,4.32,8e-06,23.75,70.75,0.001624
+Plastica,6.87,7e-05,8.89,162.18,0.073717
+Legno,6.2,3e-06,14.42,203.47,0.003516
+Acciaio,5.16,1.2e-05,23.58,196.65,0.010716
+Rame,7.0,1.7e-05,22.74,144.79,0.014524
