@@ -2,9 +2,9 @@ from functions import nn_functions as nn_func
 import numpy as np
 import pandas as pd
 
-dataset=pd.read_csv("Dataset_Dilatazione_Termica.csv")
-data_features = dataset[['Lunghezza Iniziale', 'Coefficiente', 'Temperatura Iniziale', 'Temperatura Finale', ]].values
-data_labels = dataset['Variazione di Lunghezza'].values
+dataset=pd.read_csv("Dataset_Legge_Di_Coulomb.csv")
+data_features = dataset[['Charge 1 (Coulombs)','Charge 2 (Coulombs)','Distance (m)']].values
+data_labels = dataset['Force (N)'].values
 data_features_cologne=data_features.shape[1]
 
 class NeuralNetArchitecture:
@@ -20,7 +20,7 @@ class NeuralNetArchitecture:
     # alla quantitta di features 
     def Arc_inputLayer(self, layer=0):
         input_pesi=self.pesi[layer]
-        out_features=np.dot(self.features, input_pesi)
+        out_features=np.dot(self.features, input_pesi.T)
         #print(f"matrice risultante del input layer: \n{out_features}\n\n")
         return out_features
     
@@ -88,17 +88,21 @@ class NeuralNetwork:
 
             #derivata a rispeto della funzione di perdita
             derivata_errore=nn_func.Loss_MSE_derivative(layer_ativazioni_indietro.T, data_labels)
+
             #derivata a rispeto della funzione de ativazzione
             derivata_ativazione=nn_func.activation_ReLU_derivative(layer_ativazione)
+
             #calcolo del errore locale
-            delta=derivata_ativazione * derivata_errore
+            gradiente=derivata_ativazione * derivata_errore
+
             #adesso fare il calcolo del gradiente a rispeto di ogni pesi e bias 
-            derivata_pesi=np.dot(layer_ativazioni_indietro.T, delta)
-            derivata_bias=np.sum(delta, axis=0, keepdims=True)
+            derivata_pesi=np.dot(layer_ativazioni_indietro.T, gradiente)
+            derivata_bias=np.sum(gradiente, axis=0, keepdims=True)
             
 
-            #aggiornamento dei pesi
+            #aggiornamento dei pesi e bias
             nn_Arc.pesi[layer] -= lr * derivata_pesi.T
+            nn_Arc.bias[layer] -= lr * derivata_bias.T
 
 
 
@@ -125,17 +129,6 @@ class TrainNeuralNetwork():
             
             print(f"epoch: {epoch}, loss: {loss}")
 
-train=TrainNeuralNetwork(epochs=10, learninig_rate=0.05)
+train=TrainNeuralNetwork(epochs=4, learninig_rate=0.005)
 train.train()
 
-
-
-
-
-
-
-
-
-
-
-            
