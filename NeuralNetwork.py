@@ -2,18 +2,19 @@ from functions import nn_functions as nn_func
 import numpy as np
 import pandas as pd
 
-dataset=pd.read_csv("Dataset_Legge_Di_Coulomb.csv")
-data_features = dataset[['Charge 1 (Coulombs)','Charge 2 (Coulombs)','Distance (m)']].values
-data_labels = dataset['Force (N)'].values
+dataset=pd.read_csv("dataset_Legge_di_coulomb/Dataset_Legge_Di_Coulomb.csv")
+data_features = dataset[['Carga 1 (Coulombs)','Carga 2 (Coulombs)','Distanza (m)']].values
+data_labels = dataset['Forza (N)'].values
 data_features_cologne=data_features.shape[1]
 
 class NeuralNetArchitecture:
-    def __init__(self, features=data_features, n_features=len(data_features), nnLayers=[]):
+    def __init__(self, features=data_features, n_features=len(data_features), nnLayers=[], init_pesi=None):
+        self.inizializzazione=init_pesi
         self.features=features
         self.n_features=n_features
         self.nnLayers=nnLayers
-        self.pesi=[np.random.randn(nnLayers[0], n_features)]+[np.random.randn(nnLayers[i], nnLayers[i-1])for i in range(1, len(nnLayers))]
-        self.bias=[np.random.randn(nnLayers[i])for i in range(len(nnLayers))]
+        self.pesi=[np.random.randn(nnLayers[0], n_features)] + [np.random.randn(nnLayers[i], nnLayers[i-1])for i in range(1, len(nnLayers))]
+        self.bias=[np.random.randn(nnLayers[i])for i in range(len(nnLayers))] 
         self.ativazzioni=[]
 
     # il metodo che raggiunge il primo layer della rette con il numero de node uguale 
@@ -38,8 +39,15 @@ class NeuralNetArchitecture:
         out_features=np.dot(in_features, pesi_output.T)
         #print(f"matrice risulatente del output layer {out_features}\n\n")
         return out_features
+    
+    def initialize_Weights(self):
+        if self.inizializzazione == "Xavier":
+            Xavier_inizializzazione=np.sqrt(6/(self.nnLayers[0]+self.nnLayers[-1]))
+            self.pesi*Xavier_inizializzazione
+        if self.inizializzazione == "He":
+            pass
 
-nn_Arc=NeuralNetArchitecture(features=data_features, n_features=data_features_cologne, nnLayers=[4, 8, 16, 8, 1])
+nn_Arc=NeuralNetArchitecture(features=data_features, n_features=data_features_cologne, nnLayers=[4, 8, 16, 8, 1], init_pesi="Xavier")
 print(len(nn_Arc.nnLayers))
 print(f"---------------------------------------------------------\nGli pesi della rette neurale: \n{nn_Arc.pesi}")
 print(f"---------------------------------------------------------\nGli bias della rette neurale: \n{nn_Arc.bias}\n\n\n\n\n")
@@ -49,6 +57,7 @@ class NeuralNetwork:
         self.predizione=None
 
     def Forward(self):
+        nn_Arc.initialize_Weights()
         out_features=nn_Arc.Arc_inputLayer(layer=0)
         nn_Arc.ativazzioni.append(out_features)
 
@@ -102,7 +111,7 @@ class NeuralNetwork:
 
             #aggiornamento dei pesi e bias
             nn_Arc.pesi[layer] -= lr * derivata_pesi.T
-            nn_Arc.bias[layer] -= lr * derivata_bias.T
+            nn_Arc.bias[layer] -= lr * derivata_bias.reshape(-1)
 
 
 
@@ -114,6 +123,8 @@ class TrainNeuralNetwork():
     def __init__(self, epochs, learninig_rate):
         self.epochs=epochs
         self.lr=learninig_rate
+        self.errori=[]
+        self.epochi=[]
 
     def train(self):
         for epoch in range(self.epochs):
@@ -127,8 +138,11 @@ class TrainNeuralNetwork():
             #backward pass
             nn.Backward(lr=0.001)
             
+            #prende le epochi e le errori per dopo visualizare il progresso 
+            self.errori.append(loss)
+            self.epochi.append(epoch)
             print(f"epoch: {epoch}, loss: {loss}")
 
-train=TrainNeuralNetwork(epochs=4, learninig_rate=0.005)
+train=TrainNeuralNetwork(epochs=20, learninig_rate=0.005)
 train.train()
 
