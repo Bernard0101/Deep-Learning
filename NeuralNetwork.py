@@ -1,10 +1,15 @@
 from functions import nn_functions as nn_func
+from VisualizareDatti import DatasetLeggiCoulomb
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-dataset=pd.read_csv("dataset_Legge_di_coulomb/Dataset_Legge_Di_Coulomb.csv")
-data_features = dataset[['Carga 1 (Coulombs)','Carga 2 (Coulombs)','Distanza (m)']].values
-data_labels = dataset['Forza (N)'].values
+
+dataset=DatasetLeggiCoulomb(df="dataset_Legge_di_coulomb/Dataset_Legge_Di_Coulomb.csv")
+dataset_standardized=dataset.standartizareDatti()
+
+data_features = dataset_standardized[['Carga 1 (Coulombs)','Carga 2 (Coulombs)','Distanza (m)']].values
+data_labels = dataset_standardized['Forza (N)'].values
 data_features_cologne=data_features.shape[1]
 
 class NeuralNetArchitecture:
@@ -41,13 +46,20 @@ class NeuralNetArchitecture:
         return out_features
     
     def initialize_Weights(self):
-        if self.inizializzazione == "Xavier":
-            Xavier_inizializzazione=np.sqrt(6/(self.nnLayers[0]+self.nnLayers[-1]))
-            self.pesi*Xavier_inizializzazione
-        if self.inizializzazione == "He":
-            pass
 
-nn_Arc=NeuralNetArchitecture(features=data_features, n_features=data_features_cologne, nnLayers=[4, 8, 16, 8, 1], init_pesi="Xavier")
+        #implementa la ativazzione Xavier
+        if self.inizializzazione == "Xavier":
+            Xavier_inizializzazione = np.sqrt(6 / (self.nnLayers[0] + self.nnLayers[-1]))
+            self.pesi = [Xavier_inizializzazione * peso for peso in self.pesi]
+
+
+        #implementa la ativazzione He
+        if self.inizializzazione == "He":
+            He_inizialiazzazione = np.sqrt(2 / (self.nnLayers[0]))
+            self.pesi = [He_inizialiazzazione * peso for peso in self.pesi]
+    
+
+nn_Arc=NeuralNetArchitecture(features=data_features, n_features=data_features_cologne, nnLayers=[4, 8, 16, 8, 1], init_pesi="He")
 print(len(nn_Arc.nnLayers))
 print(f"---------------------------------------------------------\nGli pesi della rette neurale: \n{nn_Arc.pesi}")
 print(f"---------------------------------------------------------\nGli bias della rette neurale: \n{nn_Arc.bias}\n\n\n\n\n")
@@ -90,7 +102,7 @@ class NeuralNetwork:
             return MAE_Loss
 
 
-    def Backward(self, lr):
+    def Backward_SGD(self, lr):
         for layer in reversed(range(len(nn_Arc.nnLayers))):
             layer_ativazioni_indietro=nn_Arc.ativazzioni[layer-1]
             layer_ativazione=nn_Arc.ativazzioni[layer]
@@ -104,11 +116,11 @@ class NeuralNetwork:
             #calcolo del errore locale
             gradiente=derivata_ativazione * derivata_errore
 
+
             #adesso fare il calcolo del gradiente a rispeto di ogni pesi e bias 
             derivata_pesi=np.dot(layer_ativazioni_indietro.T, gradiente)
             derivata_bias=np.sum(gradiente, axis=0, keepdims=True)
             
-
             #aggiornamento dei pesi e bias
             nn_Arc.pesi[layer] -= lr * derivata_pesi.T
             nn_Arc.bias[layer] -= lr * derivata_bias.reshape(-1)
@@ -136,13 +148,19 @@ class TrainNeuralNetwork():
             loss=nn.calculateLoss(target=data_labels, predizione=preds, function="MSE")
 
             #backward pass
-            nn.Backward(lr=0.001)
+            nn.Backward_SGD(lr=0.001)
             
             #prende le epochi e le errori per dopo visualizare il progresso 
-            self.errori.append(loss)
-            self.epochi.append(epoch)
-            print(f"epoch: {epoch}, loss: {loss}")
+            if epoch % 1 == 0:
+                self.errori.append(loss)
+                self.epochi.append(epoch)
+                print(f"epoch: {epoch}, loss: {loss}")
 
-train=TrainNeuralNetwork(epochs=20, learninig_rate=0.005)
-train.train()
+nn_training=TrainNeuralNetwork(epochs=10, learninig_rate=0.005)
+nn_training.train()
+
+
+#plotando i dati, e avaluare i resultati
+dataset.plotDataset(x=dataset.distanza, y=dataset.forza)
+dataset.PlotModeloProgress(x=nn_training.epochi, y=nn_training.errori)
 
