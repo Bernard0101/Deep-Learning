@@ -31,4 +31,29 @@ class nn_functions:
     def Loss_MAE(y_pred, y_label):
         return np.mean(y_pred-y_label)
     
+
+
+    #le algoritmi di otimizazzione per aggiornamento dei pesi
+    def optimizer_SGD(self, layers, ativazzioni, labels, pesi, bias, lr):
+        for layer in reversed(range(len(layers))):
+            layer_ativazioni_indietro=ativazzioni[layer-1]
+            layer_ativazione=ativazzioni[layer]
+
+            #derivata a rispeto della funzione di perdita
+            derivata_errore=self.Loss_MSE_derivative(layer_ativazioni_indietro.T, labels)
+
+            #derivata a rispeto della funzione de ativazzione
+            derivata_ativazione=self.activation_ReLU_derivative(layer_ativazione)
+
+            #calcolo del errore locale
+            gradiente=derivata_ativazione * derivata_errore
+
+            #adesso fare il calcolo del gradiente a rispeto di ogni pesi e bias 
+            derivata_pesi=np.dot(layer_ativazioni_indietro.T, gradiente)
+            derivata_bias=np.sum(gradiente, axis=0, keepdims=True)
+            
+            #aggiornamento dei pesi e bias
+            pesi[layer] -= lr * derivata_pesi.T
+            bias[layer] -= lr * derivata_bias.reshape(-1)
+    
 functions=nn_functions()

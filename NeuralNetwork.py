@@ -52,7 +52,6 @@ class NeuralNetArchitecture:
             Xavier_inizializzazione = np.sqrt(6 / (self.nnLayers[0] + self.nnLayers[-1]))
             self.pesi = [Xavier_inizializzazione * peso for peso in self.pesi]
 
-
         #implementa la ativazzione He
         if self.inizializzazione == "He":
             He_inizialiazzazione = np.sqrt(2 / (self.nnLayers[0]))
@@ -102,28 +101,11 @@ class NeuralNetwork:
             return MAE_Loss
 
 
-    def Backward_SGD(self, lr):
-        for layer in reversed(range(len(nn_Arc.nnLayers))):
-            layer_ativazioni_indietro=nn_Arc.ativazzioni[layer-1]
-            layer_ativazione=nn_Arc.ativazzioni[layer]
-
-            #derivata a rispeto della funzione di perdita
-            derivata_errore=nn_func.Loss_MSE_derivative(layer_ativazioni_indietro.T, data_labels)
-
-            #derivata a rispeto della funzione de ativazzione
-            derivata_ativazione=nn_func.activation_ReLU_derivative(layer_ativazione)
-
-            #calcolo del errore locale
-            gradiente=derivata_ativazione * derivata_errore
-
-
-            #adesso fare il calcolo del gradiente a rispeto di ogni pesi e bias 
-            derivata_pesi=np.dot(layer_ativazioni_indietro.T, gradiente)
-            derivata_bias=np.sum(gradiente, axis=0, keepdims=True)
-            
-            #aggiornamento dei pesi e bias
-            nn_Arc.pesi[layer] -= lr * derivata_pesi.T
-            nn_Arc.bias[layer] -= lr * derivata_bias.reshape(-1)
+    def Backward(self, optim, lr=0.01):
+        if(optim == "SGD"):
+            nn_func.optimizer_SGD(nn_func, layers=nn_Arc.nnLayers, ativazzioni=nn_Arc.ativazzioni, labels=data_labels, pesi=nn_Arc.pesi, bias=nn_Arc.bias, lr=0.01)
+        if(optim == "Adam"):
+            pass
 
 
 
@@ -148,7 +130,7 @@ class TrainNeuralNetwork():
             loss=nn.calculateLoss(target=data_labels, predizione=preds, function="MSE")
 
             #backward pass
-            nn.Backward_SGD(lr=0.001)
+            nn.Backward(lr=0.001, optim="SGD")
             
             #prende le epochi e le errori per dopo visualizare il progresso 
             if epoch % 1 == 0:
