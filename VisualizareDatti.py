@@ -31,26 +31,49 @@ class DatasetLeggiCoulomb:
 
         #plottare relazione tra forza e distanza
         plt.figure(figsize=(10, 6))
-        plt.scatter(x, y, s=10, c='teal')
+        plt.scatter(x, y, s=10, c='orange')
 
         #agginugere la scala per logarimica per rendere piu faccile da vedere
         plt.yscale('log')
 
         #le legend per l'asse x e y
-        plt.xlabel("distanza tra le cariche")
-        plt.ylabel("la forza eletrica")
-        plt.title("Relazione tra distanza e la forza")
-        plt.grid(True, which="both", ls="-")
+        plt.xlabel("distanza tra le cariche (Coulombs)")
+        plt.ylabel("la forza eletrica (Newtons)")
+        plt.title("Relazione tra Distanza e la Forza Elettrica")
         plt.show()
 
-    def PlotModeloProgress(self, x, y):
+    def PlotModeloProgress(self, epochi, errori):
 
-        #definire la misura e il tipo de plot
+        #plotare la tassa di imparo del modelo
         plt.figure(figsize=(10, 6)), 
-        plt.plot(x, y, label='Loss over epochs', color='teal')
+        plt.plot(epochi, errori, label='perdita tra l`epoche', color='red')
 
         #le legend
-        plt.xlabel("epochi")
+        plt.xlabel("epoche")
         plt.ylabel("perdita")
-        plt.title("progresso del imparo del modelo")
+        plt.title("Progresso nel imparo del modelo")
+        plt.show()
+
+
+    def comparezioneRisultato(self, predizioni, targets):
+
+        #creando il totale de indices
+        indices = range(1, len(predizioni) + 1)        
+
+        #plot predizioni con i targets
+        plt.figure(figsize=(12, 6))
+
+
+        #Grafico per le predizioni
+        plt.subplot(1, 2, 1)
+        plt.scatter(x=predizioni, y=indices, s=50, c='teal', alpha=0.7)
+        plt.xlim(-5, 5)
+        plt.title('Predizioni')
+
+        #Grafico per i campioni
+        plt.subplot(1, 2, 2)
+        plt.scatter(x=targets, y=indices, s=50, c='orange', alpha=0.7)
+        plt.xlim(-5, 5)
+        plt.title('Campioni')
+
         plt.show()

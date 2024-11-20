@@ -73,15 +73,15 @@ class NeuralNetwork:
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=1)
-        out_features=nn_func.activation_ReLU(Z=out_features)
+        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=2)
-        out_features=nn_func.activation_ReLU(Z=out_features)
+        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=3)
-        out_features=nn_func.activation_ReLU(Z=out_features)
+        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_outputLayer(in_features=out_features)
@@ -103,7 +103,7 @@ class NeuralNetwork:
 
     def Backward(self, optim, lr=0.01):
         if(optim == "SGD"):
-            nn_func.optimizer_SGD(nn_func, layers=nn_Arc.nnLayers, ativazzioni=nn_Arc.ativazzioni, labels=data_labels, pesi=nn_Arc.pesi, bias=nn_Arc.bias, lr=0.01)
+            nn_func.optimizer_SGD(nn_func, layers=nn_Arc.nnLayers, ativazzioni=nn_Arc.ativazzioni, labels=data_labels, pesi=nn_Arc.pesi, bias=nn_Arc.bias, learning_rate=lr)
         if(optim == "Adam"):
             pass
 
@@ -117,6 +117,7 @@ class TrainNeuralNetwork():
     def __init__(self, epochs, learninig_rate):
         self.epochs=epochs
         self.lr=learninig_rate
+        self.predizioni=None
         self.errori=[]
         self.epochi=[]
 
@@ -128,21 +129,32 @@ class TrainNeuralNetwork():
 
             #calculate Loss
             loss=nn.calculateLoss(target=data_labels, predizione=preds, function="MSE")
+            self.errori.append(loss)
 
             #backward pass
             nn.Backward(lr=0.001, optim="SGD")
-            
+            self.epochi.append(epoch)
+
+            #previnire il overfitting interrompere prima
+            if loss < 1.3:
+                break
+
             #prende le epochi e le errori per dopo visualizare il progresso 
             if epoch % 1 == 0:
-                self.errori.append(loss)
-                self.epochi.append(epoch)
                 print(f"epoch: {epoch}, loss: {loss}")
+            
+
+        #prendere la predizione finale
+        self.predizioni=preds
+        
 
 nn_training=TrainNeuralNetwork(epochs=10, learninig_rate=0.005)
 nn_training.train()
 
+print(f"\nlen training: {len(nn_training.predizioni)}\nlen di forza: {len(dataset.forza)}")
 
 #plotando i dati, e avaluare i resultati
 dataset.plotDataset(x=dataset.distanza, y=dataset.forza)
-dataset.PlotModeloProgress(x=nn_training.epochi, y=nn_training.errori)
+dataset.PlotModeloProgress(epochi=nn_training.epochi, errori=nn_training.errori)
+dataset.comparezioneRisultato(predizioni=nn_training.predizioni, targets=dataset.forza)
 
