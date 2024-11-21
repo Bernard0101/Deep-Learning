@@ -1,5 +1,5 @@
 
-# Implementazione di una Rete Neurale da Zero in Puro Python
+# Implementazione di una Rette Neurale da Zero in Puro Python
 
 Questo progetto è una dimostrazione pratica dell'implementazione di una rete neurale **da zero** utilizzando solo Python e NumPy, senza librerie esterne dedicate all machine learning. Il progetto è stato creato per applicare concetti di machine learning, matematica avanzata, e programmazione in Python.
 
