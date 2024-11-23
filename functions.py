@@ -45,7 +45,7 @@ class nn_functions:
             #derivata a rispeto della funzione de ativazzione
             derivata_ativazione=self.activation_leaky_ReLU_derivative(layer_ativazione)
 
-            #calcolo del errore locale
+            #regola della cattena
             gradiente=derivata_ativazione * derivata_errore
 
             #adesso fare il calcolo del gradiente a rispeto di ogni pesi e bias 
