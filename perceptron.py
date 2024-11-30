@@ -71,8 +71,8 @@ class TrainPerceptron:
 
                 #optimize model parameters
                 for x in X:
-                    self.model.weights += self.model.learning_rate * loss * x
-                    self.model.bias += self.model.learning_rate * loss
+                    self.model.weights -= self.model.learning_rate * loss * x
+                    self.model.bias -= self.model.learning_rate * loss
 
             #add the final prediction to the predictions
             self.predictions.append(prediction)

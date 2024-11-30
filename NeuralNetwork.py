@@ -58,7 +58,7 @@ class NeuralNetArchitecture:
             self.pesi = [He_inizialiazzazione * peso for peso in self.pesi]
     
 
-nn_Arc=NeuralNetArchitecture(features=data_features, n_features=data_features_cologne, nnLayers=[4, 8, 16, 8, 1], init_pesi="He")
+nn_Arc=NeuralNetArchitecture(features=data_features, n_features=data_features_cologne, nnLayers=[4, 8, 16, 4, 1], init_pesi="He")
 print(len(nn_Arc.nnLayers))
 print(f"---------------------------------------------------------\nGli pesi della rette neurale: \n{nn_Arc.pesi}")
 print(f"---------------------------------------------------------\nGli bias della rette neurale: \n{nn_Arc.bias}\n\n\n\n\n")
@@ -135,14 +135,14 @@ class TrainNeuralNetwork():
             nn.Backward(lr=0.001, optim="SGD")
             self.epochi.append(epoch)
 
-            #previnire il overfitting interrompere prima
-            if loss < 1.3:
-                break
-
             #prende le epochi e le errori per dopo visualizare il progresso 
             if epoch % 1 == 0:
                 print(f"epoch: {epoch}, loss: {loss}")
             
+             #previnire il overfitting interrompere prima
+            if loss < 1.3:
+                break
+
 
         #prendere la predizione finale
         self.predizioni=preds
