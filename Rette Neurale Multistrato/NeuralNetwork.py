@@ -1,11 +1,19 @@
-from functions import nn_functions as nn_func
+import os
+import sys
+
+# Aggiungi la cartella Funzioni al sistema dei percorsi
+funzioni_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Funzioni'))
+sys.path.append(funzioni_path)
+
+
+import functions as nn_func
 from VisualizareDatti import DatasetLeggiCoulomb
 import matplotlib.pyplot as plt
 import numpy as np 
 import pandas as pd
 
 
-dataset=DatasetLeggiCoulomb(df="dataset_Legge_di_coulomb/Dataset_Legge_Di_Coulomb.csv")
+dataset=DatasetLeggiCoulomb(df="Rette Neurale Multistrato/dataset_Legge_di_coulomb/Dataset_Legge_Di_Coulomb.csv")
 dataset_standardized=dataset.standartizareDatti()
 
 data_features = dataset_standardized[['Carga 1 (Coulombs)','Carga 2 (Coulombs)','Distanza (m)']].values
@@ -73,15 +81,15 @@ class NeuralNetwork:
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=1)
-        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
+        out_features=nn_func.function.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=2)
-        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
+        out_features=nn_func.function.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
+        out_features=nn_func.function.activation_leaky_ReLU(Z=out_features)
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=3)
-        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_outputLayer(in_features=out_features)
@@ -94,16 +102,16 @@ class NeuralNetwork:
 
     def calculateLoss(self, target, predizione, function):
         if(function == "MSE"):
-            MSE_Loss=nn_func.Loss_MSE(y_pred=predizione, y_label=target)
+            MSE_Loss=nn_func.function.Loss_MSE(y_pred=predizione, y_label=target)
             return MSE_Loss
         if (function == "MAE"):
-            MAE_Loss=nn_func.Loss_MAE(y_pred=predizione, y_label=target)
+            MAE_Loss=nn_func.function.Loss_MAE(y_pred=predizione, y_label=target)
             return MAE_Loss
 
 
     def Backward(self, optim, lr=0.01):
         if(optim == "SGD"):
-            nn_func.optimizer_SGD(nn_func, layers=nn_Arc.nnLayers, ativazzioni=nn_Arc.ativazzioni, labels=data_labels, pesi=nn_Arc.pesi, bias=nn_Arc.bias, learning_rate=lr)
+            nn_func.function.optimizer_SGD(nn_func, layers=nn_Arc.nnLayers, ativazzioni=nn_Arc.ativazzioni, labels=data_labels, pesi=nn_Arc.pesi, bias=nn_Arc.bias, learning_rate=lr)
         if(optim == "Adam"):
             pass
 
@@ -114,9 +122,9 @@ nn=NeuralNetwork()
 
 
 class TrainNeuralNetwork():
-    def __init__(self, epochs, learninig_rate):
+    def __init__(self, epochs, learning_rate):
         self.epochs=epochs
-        self.lr=learninig_rate
+        self.lr=learning_rate
         self.predizioni=None
         self.errori=[]
         self.epochi=[]
@@ -148,7 +156,7 @@ class TrainNeuralNetwork():
         self.predizioni=preds
         
 
-nn_training=TrainNeuralNetwork(epochs=10, learninig_rate=0.005)
+nn_training=TrainNeuralNetwork(epochs=10, learning_rate=0.005)
 nn_training.train()
 
 print(f"\nlen training: {len(nn_training.predizioni)}\nlen di forza: {len(dataset.forza)}")

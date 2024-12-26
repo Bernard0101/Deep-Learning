@@ -1,3 +1,11 @@
+import os
+import sys
+
+funzioni_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'Funzioni'))
+
+sys.path.append(funzioni_path)
+
+
 from PIL import Image
 import numpy as np 
 import matplotlib as plt

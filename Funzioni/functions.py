@@ -1,6 +1,6 @@
 import numpy as np
 
-class nn_functions:
+class function:
     def __init__(self):
         pass
 
@@ -77,10 +77,10 @@ class nn_functions:
             layer_ativazione=ativazzioni[layer]
 
             #derivata a rispeto della funzione di perdita
-            derivata_errore=self.Loss_MSE_derivative(layer_ativazioni_indietro.T, labels)
+            derivata_errore=function.Loss_MSE_derivative(layer_ativazioni_indietro.T, labels)
 
             #derivata a rispeto della funzione de ativazzione
-            derivata_ativazione=self.activation_leaky_ReLU_derivative(layer_ativazione)
+            derivata_ativazione=function.activation_leaky_ReLU_derivative(layer_ativazione)
 
             #regola della cattena
             gradiente=derivata_ativazione * derivata_errore
