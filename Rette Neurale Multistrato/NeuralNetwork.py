@@ -1,7 +1,7 @@
 from functions import nn_functions as nn_func
 from VisualizareDatti import DatasetLeggiCoulomb
 import matplotlib.pyplot as plt
-import numpy as np
+import numpy as np 
 import pandas as pd
 
 
@@ -139,7 +139,7 @@ class TrainNeuralNetwork():
             if epoch % 1 == 0:
                 print(f"epoch: {epoch}, loss: {loss}")
             
-             #previnire il overfitting interrompere prima
+            #previnire il overfitting interrompere prima
             if loss < 1.3:
                 break
 
