@@ -1,15 +1,26 @@
 import os
 import sys
+import numpy as np 
+import matplotlib as plt
+import functions as CNN_func
 
 funzioni_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'Funzioni'))
 
 sys.path.append(funzioni_path)
 
 
-from PIL import Image
-import numpy as np 
-import matplotlib as plt
-import functions as CNN_func
+#aggiornamento dell'import dello dataset
+from mnist import MNIST
+
+# Carica i dati MNIST
+mndata = MNIST('data/')
+X_train, y_train = mndata.load_training()
+X_test, y_test = mndata.load_testing()
+
+
+
+
+
 
 
 

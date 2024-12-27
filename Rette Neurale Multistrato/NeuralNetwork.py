@@ -81,15 +81,15 @@ class NeuralNetwork:
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=1)
-        out_features=nn_func.function.activation_leaky_ReLU(Z=out_features)
+        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=2)
-        out_features=nn_func.function.activation_leaky_ReLU(Z=out_features)
+        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
-        out_features=nn_func.function.activation_leaky_ReLU(Z=out_features)
         out_features=nn_Arc.Arc_hiddenLayer(in_features=out_features, layer=3)
+        out_features=nn_func.activation_leaky_ReLU(Z=out_features)
         nn_Arc.ativazzioni.append(out_features)
 
         out_features=nn_Arc.Arc_outputLayer(in_features=out_features)
@@ -102,16 +102,16 @@ class NeuralNetwork:
 
     def calculateLoss(self, target, predizione, function):
         if(function == "MSE"):
-            MSE_Loss=nn_func.function.Loss_MSE(y_pred=predizione, y_label=target)
+            MSE_Loss=nn_func.Loss_MSE(y_pred=predizione, y_label=target)
             return MSE_Loss
         if (function == "MAE"):
-            MAE_Loss=nn_func.function.Loss_MAE(y_pred=predizione, y_label=target)
+            MAE_Loss=nn_func.Loss_MAE(y_pred=predizione, y_label=target)
             return MAE_Loss
 
 
     def Backward(self, optim, lr=0.01):
         if(optim == "SGD"):
-            nn_func.function.optimizer_SGD(nn_func, layers=nn_Arc.nnLayers, ativazzioni=nn_Arc.ativazzioni, labels=data_labels, pesi=nn_Arc.pesi, bias=nn_Arc.bias, learning_rate=lr)
+            nn_func.optimizer_SGD(nn_func, layers=nn_Arc.nnLayers, ativazzioni=nn_Arc.ativazzioni, labels=data_labels, pesi=nn_Arc.pesi, bias=nn_Arc.bias, learning_rate=lr)
         if(optim == "Adam"):
             pass
 
