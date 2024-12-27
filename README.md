@@ -2,28 +2,28 @@
 
 ## Introduzione
 
-Questo repository contiene implementazioni manuali di diversi algoritmi e architetture di retti neurali. L'obiettivo principale è comprendere i fondamenti delle retti neurali, dall'architettura alla logica di apprendimento, utilizzando dataset sintetici (creati manualmente) invece di dati reali.
+Questo repository contiene implementazioni dal zero di diversi algoritmi e architetture di retti neurali. L'obiettivo principale è comprendere i fondamenti, e il funzionamento generale di come alcuni modelli di retti neurali funzionano, dall'architetura, alla matematica e codificazione degli algoritmi
 
 ## Struttura del Progetto
 
-Il progetto è organizzato in diverse directory, ciascuna con uno scopo specifico:
+Il progetto è organizzato in diverse folder, ogni uno con copre un modello specifico scopo specifico:
 
-### **Funzioni/**
+### **`Funzioni`**
 
-Contiene funzioni di base e algoritmi essenziali per il funzionamento delle retti neurali. Include:
+Contiene funzioni di base per I modeli algoritmici, essenziali per il funzionamento delle retti neurali. Include:
 
 - **Funzioni di Attivazione:** ReLU, Sigmoid, Tanh, e loro derivate.
 - **Algoritmi di Ottimizzazione:** Discesa del gradiente stocastico (SGD) e altre tecniche.
 
-### **Perceptron/**
+### **`Perceptron`**
 
-Implementa il Perceptron, la prima e più semplice architettura di rette neurale. Questo modulo è il punto di partenza per esplorare il deep learning.
+Implementa il Perceptrone, la prima e più semplice architettura di una rette neurale che rappresenta un singolo neurone computazionale. Questo modulo intenta di "capire" relazioni semplici tra input e output come la logica booleana, e è il punto di partenza per esplorare il deep learning.
 
-### **Rette Neurale Multistrato/**
+### **`Rette Neurale Multistrato`**
 
-Fornisce un'implementazione di una rette neurale multistrato (MLP), composta da più strati di neuroni. Questa architettura è progettata per modellare relazioni complesse nei dati.
+Fornisce un'implementazione di una rette neurale multistrato (MLP), composta da più strati di neuroni. Il modello utilizza di una relazione della fisica la legge di coulomb con dataset sintetici, e intenta di prevedere quella sara la forza elettrica di una serie de inputs. Questa architettura è progettata per modellare relazioni piu complesse nei dati. 
 
-### **Rette Neurale Convoluzionale/**
+### **`Rette Neurale Convoluzionale`**
 
 Dedicata alle retti neurali convoluzionali (CNN), utilizzate principalmente per l'elaborazione delle immagini. Questa parte del progetto è attualmente in fase di sviluppo.
 
@@ -38,8 +38,8 @@ Dedicata alle retti neurali convoluzionali (CNN), utilizzate principalmente per 
 
 | Modulo                          | Stato       |
 | ------------------------------- | ----------- |
-| **Funzioni**                    | Completato  |
-| **Perceptron**                  | Completato  |
+| **Funzioni**                    | In sviluppo |
+| **Perceptrone**                 | Completato  |
 | **Rete Neurale Multistrato**    | Funzionante |
 | **Rete Neurale Convoluzionale** | In sviluppo |
 
