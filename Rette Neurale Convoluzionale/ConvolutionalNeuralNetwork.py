@@ -8,54 +8,69 @@ sys.path.append(funzioni_path)
 
 
 #aggiornamento dell'import dello dataset
-from mnist import MNIST
+from mnist import MNIST # type: ignore
 
 # Carica i dati MNIST
 mndata = MNIST('data/')
-X_train, y_train = mndata.load_training
+features, labels = mndata.load_training
 
 
-import numpy as np 
-import matplotlib as plt
-import functions as CNN_func
+import numpy as np  # type: ignore
+import matplotlib as plt # type: ignore
+import functions as CNN_func # type: ignore
 
 
 class ConvolutionalNN_Structure:
 
-    def __init__(self, features, CNN_layers=[]):
-        self.parameters=[]
+    def __init__(self, features=features, CNN_layers=[]):
+        self.parameters={}
         self.CNN_layers=CNN_layers
         self.ativazioni=[]
 
+    #il metodo per il strato d'input
     def inputLayer(self, features):
-        input_weights=self.weights["input"]["weights"]
-        input_bias=self.bias["input"]["bias"]
-        result=np.dot(features, input_weights.T) + input_bias
-        return result
+        if not self.parameters[0]["type"] == "input":
+            raise ValueError("tipo de layer scoretto")
+        else:
+            input_weights=self.parameters[0]["weights"]
+            input_bias=self.parameters[0]["bias"]
+            result=np.dot(features, input_weights.T) + input_bias
+            return result
     
+    #il metodo per I strati nacosti
     def hiddenLayer(self, features, layer):
-        hidden_weights=self.weights["hidden"][layer]["weights"]
-        hidden_bias=self.bias["hidden"][layer]["bias"]
-        result=np.dot(features, hidden_weights.T) + hidden_bias
-        return result
+        if not self.parameters[layer]["type"] == "hidden":
+            raise ValueError("tipo de layer scoretto")
+        else:
+            hidden_weights=self.parameters[layer]["weights"]
+            hidden_bias=self.parameters[layer]["bias"]
+            result=np.dot(features, hidden_weights.T) + hidden_bias
+            return result
     
+    #il metodo per il starto d'uscita
     def outputLayer(self, features):
-        output_weights=self.weights["output"][-1]["weights"]
-        output_bias=self.bias["output"][-1]["bias"]
-        result=np.dot(features, output_weights.T) + output_bias
-        return result
+        if not self.parameters[-1]["type"] == "output":
+            raise ValueError("tipo de layer scorreto")
+        else:
+            output_weights=self.parameters[-1]["weights"]
+            output_bias=self.parameters[-1]["bias"]
+            result=np.dot(features, output_weights.T) + output_bias
+            return result
 
-    def ConvolutionalLayer(self, features):
+    #il metodo per il strato convoluzionale
+    def ConvolutionalLayer(self, features, layer):
         pass
 
+
+    #il metodo per il strato di pooling
     def PoolingLayer(self, feature_map):
         pass
 
-
+    #il metodo che initializa tutti strati della architettura datta in CNN_layers
     def initialize_parameters(self):
         for i, layer in enumerate(self.CNN_layers):
 
-            layer_key = f"layer_{i+1}"
+            layer_key = f"layer_{i}"
 
             if layer["type"] == "input":
                 input_neurons=layer["neurons"]
@@ -85,32 +100,29 @@ class ConvolutionalNN_Structure:
                 }
 
             elif layer["type"] == "conv":
-                pass
+                kernel_length = layer["kernel_length"]
+                kenrnel_height = layer["kernel_height"]
+                filters = layer["filters"]
+                self.parameters[layer_key]={
+                    "layer" : "conv",
+                    "kernels" : np.random.randn(kenrnel_height, kernel_length , filters) 
+                }
 
             elif layer["type"] == "pool":
                 pass
 
 
-CNN_struct = ConvolutionalNN_Structure(features=None CNN_layers=[{
-                                    "type" : "input", "neurons" : features,
-                                    "type" : "conv", "kernel_size" : (3,3), "filters" : 4,
-                                    "type" : "conv", "kernel_size" : (3,3), "filters" : 4,
-                                    "type" : "conv", "kernel_size" : (3,3), "filters" : 4,
-                                    "type" : "pool",
-                                    "type" : "hidden", "neurons" : 12,
-                                    "type" : "hidden", "neurons" : 24,
-                                    "type" : "hidden", "neurons" : 12,
-                                    "type" : "output", "neurons" : 1
-                                    }])
-
-
-
-class ConvolutionalNN_Architecture:
-    def __init__(self):
-        pass
-        
-
-    def Forward():
+CNN_struct = ConvolutionalNN_Structure(features=None, CNN_layers=[
+                                    {"type" : "input", "neurons" : features},
+                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
+                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
+                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
+                                    {"type" : "pool"},
+                                    {"type" : "hidden", "neurons" : 12},
+                                    {"type" : "hidden", "neurons" : 24},
+                                    {"type" : "hidden", "neurons" : 12},
+                                    {"type" : "output", "neurons" : 1}
+                                    ])
 
                 
     
