@@ -2,27 +2,28 @@ import os
 import sys
 
 
-funzioni_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'Funzioni'))
-
+# Aggiungi la cartella Funzioni al sistema dei percorsi
+funzioni_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Funzioni'))
 sys.path.append(funzioni_path)
 
 
-#aggiornamento dell'import dello dataset
-from mnist import MNIST # type: ignore
+import tensorflow as tf
 
-# Carica i dati MNIST
-mndata = MNIST('data/')
-features, labels = mndata.load_training
+#Scarica automaticamente CIFAR-10
+(features, _), _ = tf.keras.datasets.cifar10.load_data()
+input_size = features.shape[1] * features.shape[2] * features.shape[3]
+print("Dimensione di input per una singola immagine:", input_size)
 
 
-import numpy as np  # type: ignore
-import matplotlib as plt # type: ignore
-import functions as CNN_func # type: ignore
+
+import numpy as np
+import matplotlib as plt
+import functions as CNN_func
 
 
 class ConvolutionalNN_Structure:
 
-    def __init__(self, features=features, CNN_layers=[]):
+    def __init__(self, features=None, CNN_layers=[]):
         self.parameters={}
         self.CNN_layers=CNN_layers
         self.ativazioni=[]
@@ -61,7 +62,6 @@ class ConvolutionalNN_Structure:
     def ConvolutionalLayer(self, features, layer):
         pass
 
-
     #il metodo per il strato di pooling
     def PoolingLayer(self, feature_map):
         pass
@@ -74,10 +74,10 @@ class ConvolutionalNN_Structure:
 
             if layer["type"] == "input":
                 input_neurons=layer["neurons"]
-                input_weights=layer["weights"]
+                input_features=layer["feature_inputs"]
                 self.parameters[layer_key] = {
                     "layer" : "input",
-                    "weights" : np.random.randn(input_weights, input_neurons),
+                    "weights" : np.random.randn(input_neurons, input_features),
                     "bias" : np.random.randn(input_neurons)
                 }
 
@@ -108,12 +108,9 @@ class ConvolutionalNN_Structure:
                     "kernels" : np.random.randn(kenrnel_height, kernel_length , filters) 
                 }
 
-            elif layer["type"] == "pool":
-                pass
 
-
-CNN_struct = ConvolutionalNN_Structure(features=None, CNN_layers=[
-                                    {"type" : "input", "neurons" : features},
+CNN_struct = ConvolutionalNN_Structure(features=features, CNN_layers=[
+                                    {"type" : "input", "feature_inputs" : input_size, "neurons" : 20},
                                     {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
                                     {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
                                     {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
@@ -124,7 +121,50 @@ CNN_struct = ConvolutionalNN_Structure(features=None, CNN_layers=[
                                     {"type" : "output", "neurons" : 1}
                                     ])
 
-                
+class CovolutionalNN_Architecture:
+    def __init__(self):
+        self.data_features = features
+
+    def Forward(self):
+        CNN_struct.initialize_parameters()
+        out_features=CNN_struct.inputLayer(features=self.data_features)
+        CNN_struct.ativazioni.append(out_features)
+
+        out_feature_map=CNN_struct.ConvolutionalLayer(features=out_features, layer=1)
+        out_feature_map=CNN_func.activation_ReLU(Z=out_feature_map)
+        CNN_struct.ativazioni.append(out_feature_map)
+
+        out_feature_map=CNN_struct.ConvolutionalLayer(features=out_feature_map, layer=2)
+        out_feature_map=CNN_func.activation_ReLU(Z=out_feature_map)
+        CNN_struct.ativazioni.append(out_feature_map)
+
+        out_feature_map=CNN_struct.ConvolutionalLayer(features=out_feature_map, layer=3)
+        out_feature_map=CNN_func.activation_ReLU(Z=out_feature_map)
+        CNN_struct.ativazioni.append(out_feature_map)
+
+        out_features=CNN_struct.PoolingLayer(feature_map=out_feature_map)
+        CNN_struct.ativazioni.append(out_features)
+
+        out_features=CNN_struct.hiddenLayer(features=out_features, layer=5)
+        out_features=CNN_func.activation_ReLU(Z=out_features)
+        CNN_struct.ativazioni.append(out_features)
+
+        out_features=CNN_struct.hiddenLayer(features=out_features, layer=6)
+        out_features=CNN_func.activation_ReLU(Z=out_features)
+        CNN_struct.ativazioni.append(out_features)
+
+        out_features=CNN_struct.hiddenLayer(features=out_features, layer=7)
+        out_features=CNN_func.activation_ReLU(Z=out_features)
+        CNN_struct.ativazioni.append(out_features)
+
+        out_features=CNN_struct.outputLayer(features=out_features)
+        return out_features
+
+
+
+        
+CNN_Arc=CovolutionalNN_Architecture()
+CNN_Arc.Forward()
     
 
  
