@@ -30,7 +30,7 @@ class ConvolutionalNN_Structure:
 
     #il metodo per il strato d'input
     def inputLayer(self, features):
-        if not self.parameters[0]["type"] == "input":
+        if self.parameters[0]["type"] != "input":
             raise ValueError("tipo di strato scoretto")
         else:
             input_weights=self.parameters[0]["weights"]
@@ -40,7 +40,7 @@ class ConvolutionalNN_Structure:
     
     #il metodo per I strati nacosti
     def hiddenLayer(self, features, layer):
-        if not self.parameters[layer]["type"] == "hidden":
+        if self.parameters[layer]["type"] != "hidden":
             raise ValueError("tipo di strato scoretto")
         else:
             hidden_weights=self.parameters[layer]["weights"]
@@ -50,7 +50,7 @@ class ConvolutionalNN_Structure:
     
     #il metodo per il starto d'uscita
     def outputLayer(self, features):
-        if not self.parameters[-1]["type"] == "output":
+        if self.parameters[-1]["type"] != "output":
             raise ValueError("tipo di strato scorreto")
         else:
             output_weights=self.parameters[-1]["weights"]
@@ -60,7 +60,7 @@ class ConvolutionalNN_Structure:
 
     #il metodo per il strato convoluzionale
     def ConvolutionalLayer(self, features, layer):
-        if not self.parameters[layer]["type"] == "conv":
+        if self.parameters[layer]["type"] != "conv":
             raise ValueError("tipo di strato scoretto")
         else:
             #prendendo le carateristiche dei kernel 
@@ -69,8 +69,7 @@ class ConvolutionalNN_Structure:
             kernel_length=self.parameters[layer]["length"]
 
             #applicando un padding all'immagine originale
-            features_padded=np.pad(features, mode="constant")
-            feature_map=np.zeros(features_padded)
+            feature_map=np.zeros(features)
 
             #algoritmo per la convoluzione
             for i in range(features.shape[0]):
@@ -78,7 +77,7 @@ class ConvolutionalNN_Structure:
 
                     region=features[i:i+kernel_length, j:j+kernel_height]
 
-                    feature_map[i,j]=np.sum(region, kernels)
+                    feature_map[i,j]=np.sum(region * kernels)
 
             return feature_map
 
