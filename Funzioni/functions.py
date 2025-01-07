@@ -9,10 +9,10 @@ def activation_ReLU_derivative(Z):
     return np.where(Z > 0, 1, 0)
 
 #Leaky ReLU variant ativazione
-def activation_leaky_ReLU(Z, alpha=0.01):
+def activation_leaky_ReLU(Z, alpha=0.03):
     return np.where(Z >= 0, Z, alpha * Z)
 
-def activation_leaky_ReLU_derivative(Z, alpha=0.01):
+def activation_leaky_ReLU_derivative(Z, alpha=0.03):
     return np.where(Z > 0, 1, alpha)
 
 #Sigmoid function ativazione
@@ -77,7 +77,7 @@ def optimizer_SGD(self, layers, ativazzioni, labels, pesi, bias, learning_rate):
         derivata_errore=Loss_MSE_derivative(layer_ativazioni_indietro.T, labels)
 
         #derivata a rispeto della funzione de ativazzione
-        derivata_ativazione=activation_leaky_ReLU_derivative(layer_ativazione)
+        derivata_ativazione=activation_leaky_ReLU(layer_ativazione)
 
         #regola della cattena
         gradiente=derivata_ativazione * derivata_errore

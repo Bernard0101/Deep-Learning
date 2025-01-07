@@ -31,7 +31,7 @@ class ConvolutionalNN_Structure:
     #il metodo per il strato d'input
     def inputLayer(self, features):
         if not self.parameters[0]["type"] == "input":
-            raise ValueError("tipo de layer scoretto")
+            raise ValueError("tipo di strato scoretto")
         else:
             input_weights=self.parameters[0]["weights"]
             input_bias=self.parameters[0]["bias"]
@@ -41,7 +41,7 @@ class ConvolutionalNN_Structure:
     #il metodo per I strati nacosti
     def hiddenLayer(self, features, layer):
         if not self.parameters[layer]["type"] == "hidden":
-            raise ValueError("tipo de layer scoretto")
+            raise ValueError("tipo di strato scoretto")
         else:
             hidden_weights=self.parameters[layer]["weights"]
             hidden_bias=self.parameters[layer]["bias"]
@@ -51,7 +51,7 @@ class ConvolutionalNN_Structure:
     #il metodo per il starto d'uscita
     def outputLayer(self, features):
         if not self.parameters[-1]["type"] == "output":
-            raise ValueError("tipo de layer scorreto")
+            raise ValueError("tipo di strato scorreto")
         else:
             output_weights=self.parameters[-1]["weights"]
             output_bias=self.parameters[-1]["bias"]
@@ -60,7 +60,30 @@ class ConvolutionalNN_Structure:
 
     #il metodo per il strato convoluzionale
     def ConvolutionalLayer(self, features, layer):
-        pass
+        if not self.parameters[layer]["type"] == "conv":
+            raise ValueError("tipo di strato scoretto")
+        else:
+            #prendendo le carateristiche dei kernel 
+            kernels=self.parameters[layer]["kernels"]
+            kernel_height=self.parameters[layer]["height"]
+            kernel_length=self.parameters[layer]["length"]
+
+            #applicando un padding all'immagine originale
+            features_padded=np.pad(features, mode="constant")
+            feature_map=np.zeros(features_padded)
+
+            #algoritmo per la convoluzione
+            for i in range(features.shape[0]):
+                for j in range(features.shape[1]):
+
+                    region=features[i:i+kernel_length, j:j+kernel_height]
+
+                    feature_map[i,j]=np.sum(region, kernels)
+
+            return feature_map
+
+            
+
 
     #il metodo per il strato di pooling
     def PoolingLayer(self, feature_map):
@@ -101,19 +124,21 @@ class ConvolutionalNN_Structure:
 
             elif layer["type"] == "conv":
                 kernel_length = layer["kernel_length"]
-                kenrnel_height = layer["kernel_height"]
-                filters = layer["filters"]
+                kernel_height = layer["kernel_height"]
+                channels = 3
                 self.parameters[layer_key]={
                     "layer" : "conv",
-                    "kernels" : np.random.randn(kenrnel_height, kernel_length , filters) 
+                    "height" : kernel_height,
+                    "length" : kernel_length,
+                    "kernels" : np.random.randn(kernel_height, kernel_length , channels) 
                 }
 
 
 CNN_struct = ConvolutionalNN_Structure(features=features, CNN_layers=[
                                     {"type" : "input", "feature_inputs" : input_size, "neurons" : 20},
-                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
-                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
-                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3, "filters" : 4},
+                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3},
+                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3},
+                                    {"type" : "conv", "kernel_height" : 3, "kernel_length" : 3},
                                     {"type" : "pool"},
                                     {"type" : "hidden", "neurons" : 12},
                                     {"type" : "hidden", "neurons" : 24},
