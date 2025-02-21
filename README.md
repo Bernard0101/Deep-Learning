@@ -1,4 +1,4 @@
-# Documentazione del Progetto: Implementazione di Algoritmi di Retti Neurali
+# Documentazione del Progetto: Implementazione di Algoritmi di Rete Neurale
 
 ## Introduzione
 
