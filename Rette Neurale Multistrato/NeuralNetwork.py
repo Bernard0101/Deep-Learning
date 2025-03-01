@@ -123,7 +123,7 @@ class NeuralNetwork():
     def __init__(self, epochs, learning_rate):
         self.epochs=epochs
         self.lr=learning_rate
-        self.predizione=[]
+        self.predizione=None
         self.errori=[]
         self.epochi=[]
     
@@ -150,12 +150,12 @@ class NeuralNetwork():
                 break
         
         #prende l'ultima predizione del modello
-        self.predizione.append(preds)
+        self.predizione=preds
         
     def predict(self, value):
         nn.input_data=value
         nn.Forward()
-        print("predizione: nn.predizione")
+        print(f"predizione: {nn.predizione}")
 
 nn_Model=NeuralNetwork(epochs=10, learning_rate=0.005)
 nn_Model.train()
