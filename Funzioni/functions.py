@@ -60,11 +60,11 @@ def Loss_Binary_Cross_Entropy_derivative(y_pred, y_label):
     return derivative
 
 def Loss_Softmax(Z):
-    exp_z = np.exp(Z - np.max(Z)) 
+    exp_z=np.exp(Z - np.max(Z)) 
     return exp_z / np.sum(exp_z)
 
 def Loss_Softmax_derivative(Z):
-    s = Loss_Softmax(Z).reshape(-1, 1) 
+    s=Loss_Softmax(Z).reshape(-1, 1) 
     return np.diagflat(s) - np.dot(s, s.T) 
 
 #le algoritmi di otimizazzione per aggiornamento dei pesi

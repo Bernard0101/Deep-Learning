@@ -2,14 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-class DatasetDilatazioneTermica:
+class processore:
     def __init__(self, df):
-        self.dataframe=df.values
-        self.materiale=['Materiale']
-        self.coeff_materiale=['Coeff Dilatazione (α)']
-        self.temp_iniziale=['Temperatura Iniziale (°C)']
-        self.temp_finale=['Temperatura Finale (°C)']
-        self.delta_L=['ΔL (m)']
+        self.dataframe=pd.read_csv(df)
+        
+    def standartizareDatti(self):
+        mean=np.mean(self.dataframe, axis=0)
+        deviation=np.std(self.dataframe, axis=0)
+        standardize=(self.dataframe-mean)/deviation
+        standardized_df=pd.DataFrame(standardize, columns=self.dataframe.columns)
+        return standardized_df
+
 
 
 class DatasetLeggiCoulomb:
@@ -20,14 +23,8 @@ class DatasetLeggiCoulomb:
         self.distanza=self.dataframe['Distanza (m)'].values
         self.forza=self.dataframe['Forza (N)'].values
 
-    def standartizareDatti(self):
-        mean=np.mean(self.dataframe, axis=0)
-        deviation=np.std(self.dataframe, axis=0)
-        standardize=(self.dataframe-mean)/deviation
-        standardized_df = pd.DataFrame(standardize, columns=self.dataframe.columns)
-        return standardized_df
 
-    def plotDataset(self, x, y):
+    def plottare_analisi(self, x, y):
 
         #plottare relazione tra forza e distanza
         plt.figure(figsize=(10, 6))

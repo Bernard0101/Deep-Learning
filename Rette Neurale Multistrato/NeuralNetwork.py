@@ -2,23 +2,24 @@ import os
 import sys
 
 # Aggiungi la cartella Funzioni al sistema dei percorsi
-funzioni_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Funzioni'))
+funzioni_path=os.path.abspath(os.path.join(os.path.dirname(__file__), '../Funzioni'))
 sys.path.append(funzioni_path)
 
 
 import functions as nn_func
+from VisualizareDatti import processore
 from VisualizareDatti import DatasetLeggiCoulomb
-import matplotlib.pyplot as plt
-import numpy as np 
-import pandas as pd
+import matplotlib.pyplot as plt # type: ignore
+import numpy as np  # type: ignore
+import pandas as pd # type: ignore
 
 
-dataset=DatasetLeggiCoulomb(df="Rette Neurale Multistrato/dataset_Legge_di_coulomb/Dataset_Legge_Di_Coulomb.csv")
-dataset_standardized=dataset.standartizareDatti()
+preprocessore=processore(df="Rette Neurale Multistrato/Dataset_Legge_di_coulomb/Dataset_Legge_Di_Coulomb.csv")
+dataset_standardized=preprocessore.standartizareDatti()
 
-data_features = dataset_standardized[['Carga 1 (Coulombs)','Carga 2 (Coulombs)','Distanza (m)']].values
-data_labels = dataset_standardized['Forza (N)'].values
-data_features_cologne=data_features.shape[1]
+
+data_features=dataset_standardized[["Carga 1 (Coulombs)","Carga 2 (Coulombs)","Distanza (m)"]].values
+data_labels=dataset_standardized["Forza (N)"].values
 
 
 class NeuralNetStructure:
@@ -64,10 +65,8 @@ class NeuralNetStructure:
             self.pesi = [He_inizialiazzazione * peso for peso in self.pesi]
     
 
-nn_Struct=NeuralNetStructure(n_features=data_features_cologne, nnLayers=[4, 8, 16, 4, 1], init_pesi="He")
-print(len(nn_Struct.nnLayers))
-print(f"---------------------------------------------------------\nI pesi della rette neurale: \n{nn_Struct.pesi}")
-print(f"---------------------------------------------------------\nI bias della rette neurale: \n{nn_Struct.bias}\n\n\n\n\n")
+nn_Struct=NeuralNetStructure(n_features=data_features.shape[1], nnLayers=[4, 8, 16, 4, 1], init_pesi="He")
+
 
 class NeuralNetArchitecture:
     def __init__(self, input_data=None):
@@ -105,6 +104,12 @@ class NeuralNetArchitecture:
         if (function == "MAE"):
             MAE_Loss=nn_func.Loss_MAE(y_pred=predizione, y_label=target)
             return MAE_Loss
+        if (function == "BCE"):
+            BCE_Loss=nn_func.Loss_Binary_Cross_Entropy(y_pred=predizione, y_label=target)
+            return BCE_Loss
+        if (function == "Softmax"):
+            Softmax=nn_func.Loss_Softmax(Z=predizione)
+            return Softmax
 
 
     def Backward(self, optim, lr=0.01):
@@ -159,12 +164,7 @@ class NeuralNetwork():
 
 nn_Model=NeuralNetwork(epochs=10, learning_rate=0.005)
 nn_Model.train()
-nn_Model.predict(value=[4e-6, 6e-6, 0.1])
-
-print(f"\nlen training: {len(nn_Model.predizione)}\nlen di forza: {len(dataset.forza)}")
-
-#plotando i dati, e avaluare i resultati
-dataset.plotDataset(x=dataset.distanza, y=dataset.forza)
+dataset=DatasetLeggiCoulomb(df="Rette Neurale Multistrato/Dataset_Legge_di_coulomb/Dataset_Legge_Di_Coulomb.csv")
+dataset.plottare_analisi(x=dataset.distanza, y=dataset.forza)
 dataset.PlotModeloProgress(epochi=nn_Model.epochi, errori=nn_Model.errori)
 dataset.comparezioneRisultato(predizioni=nn_Model.predizione, targets=dataset.forza)
-
