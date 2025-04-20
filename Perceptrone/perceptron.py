@@ -1,15 +1,6 @@
 import numpy as np
+from functions import nn_functions as nn_func
 
-
-def activation_ReLU(Z):
-    return Z if Z >= 0 else 0
-
-def calculate_MSE(losses):
-    mse_error=0
-    for index, error in enumerate(losses):
-        mse_error+= error**2
-    mse_error/=len(losses)
-    return mse_error
 
 class Perceptron:
     def __init__(self, learning_rate=0.001, n_features=0):
@@ -26,7 +17,7 @@ class Perceptron:
             for x in X:
                 Z+= weight * x
         Z+=self.bias
-        prediction=activation_ReLU(Z)
+        prediction=nn_func.activation_ReLU(Z)
         return prediction
     
     #calculate the error for that specific prediction
@@ -76,7 +67,6 @@ class TrainPerceptron:
 
             #add the final prediction to the predictions
             self.predictions.append(prediction)
-        return self.predictions[-1]
 
 
 
