@@ -2,27 +2,25 @@
 
 ## Introduzione
 
-Questo repository contiene implementazioni dal zero di diversi algoritmi e architetture di rete neurale. L'obiettivo principale è comprendere i fondamenti, e il funzionamento generale di come alcuni modelli di rete neurale funzionano, dall'architetura, alla matematica e codificazione degli algoritmi
+Questo repository contiene implementazioni da zero di diversi algoritmi e architetture di rete neurale. L'obiettivo principale è comprendere i fondamenti, e il funzionamento generale di come alcuni modelli di rete neurale funzionano, dall'architetura, alla matematica alla codificazione degli algoritmi specifici ad ogni modello.
 
 ## Struttura del Progetto
 
-Il progetto è organizzato in diverse folder, dove ogni uno copre un modello specifico, un scopo specifico:
+### **`datasets`**
 
-### **`Funzioni`**
-
-Contiene funzioni di base per I modeli algoritmici, essenziali per il funzionamento delle retti neurali. Include:
-
-- **Funzioni di Attivazione:** ReLU, Sigmoid, Tanh, e loro derivate.
-- **Algoritmi di Ottimizzazione:** Discesa del gradiente stocastico (SGD).
+dove si incontrano tutti i datasets utilizzati per allenare i modelli sia i dataset non puliti (raw) che quelli puliti
 
 ### **`Perceptron`**
 
-Implementa il "Perceptrone", la prima e più semplice architettura di una rette neurale che rappresenta un singolo neurone computazionale. Questo modulo intenta di "capire" relazioni semplici tra input e output come la logica booleana, e è il punto di partenza per esplorare il deep learning e le reti neurali piu complesse.
+Implementa il "Perceptrone", la prima e più semplice architettura di una rete neurale che rappresenta un singolo neurone computazionale, ispirato matematicamente al neurone biologico umano. Questo modulo intende di "capire" relazioni semplici tra input e output come la logica booleana, e è il punto di partenza per esplorare il deep learning e le reti neurali piu complesse.
 
 ### **`Rete Neurale Multistrato`**
 
-Fornisce un'implementazione di una rette neurale multistrato (MLP), composta da più strati di neuroni. Il modello utilizza di una relazione della fisica la legge di coulomb con dataset sintetici, e intenta di prevedere quella sara la forza elettrica da una serie di inputs. Questa architettura è progettata per modellare relazioni piu complesse nei dati dove se introdusce l'imparo non lineare. 
+Fornisce un'implementazione della "Multilayer Perceptron" (MLP), che aggiunge più strati di neuroni, funzioni di attivazione e perdita e l'implementazione di algoritmi di addestramento dei pesi piu complessi, come lo "Stochastic Gradient Descent" (SGD) che utilizzano di concetti matematici come le derivate, per indicare i punti di miglior aggiornamento dei parametri del modello per renderlo piu preciso. Questi concetti permettono al modello di "capire" relazioni piu complesse nei dati. 
 
+### **`Tools`**
+
+Fornisce l'implementazione di diversi algoritmi che permettono all'utente di pulire i dati e anche valutare l'apprendimento dei modelli, con algoritmi come la standardizzazione dei dati, oppure algoritmi come la cross-validation
 
 ## Obiettivi del Progetto
 
@@ -35,7 +33,7 @@ Fornisce un'implementazione di una rette neurale multistrato (MLP), composta da 
 
 | Modulo                          | Stato       |
 | ------------------------------- | ----------- |
-| **Funzioni**                    | In sviluppo |
+| **Tools**                       | Funzionante |
 | **Perceptrone**                 | Funzionante |
 | **Rete Neurale Multistrato**    | Funzionante |
 
@@ -48,16 +46,19 @@ Fornisce un'implementazione di una rette neurale multistrato (MLP), composta da 
    git clone https://github.com/Bernard0101/Deep_Learning.git
    ```
 
-2. **Naviga nelle Cartelle:** Ogni directory contiene un modulo separato per una specifica architettura di rette neurale.
+2. **Naviga nelle Cartelle:** Ogni directory contiene un modulo separato per una specifica architettura di rete neurale
 
-3. **Esegui gli Script:** Gli script principali possono essere eseguiti per testare e addestrare i modelli con i dataset forniti.
+3. **Esegui gli Script:**
+   ```bash
+   python -m src/...
+   ```
 
 ## Prossimi Passi
 
 
 - **Aggiungere Esempi:** Fornire esempi pratici e visualizzazioni per dimostrare il funzionamento dei modelli.
 
-- **Validazione:** Implementare alcuni atri tipi di validazione per i modeli di rete neurale, come "cross validation" e "confusion matrix"
+- **Validazione:** Implementare alcuni atri tipi di validazione per i modeli di rete neurale, come "confusion matrix"...
 
 ---
 
