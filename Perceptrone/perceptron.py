@@ -1,76 +1,53 @@
-import numpy as np
-from functions import nn_functions as nn_func
+import numpy as np # type: ignore
+from Tools import functions as nn_func
 
 
 class Perceptron:
-    def __init__(self, learning_rate=0.001, n_features=0):
-        self.features=n_features
-        self.learning_rate=learning_rate
-        self.weights=np.random.rand(n_features)
-        self.loss=np.random.rand(n_features)
-        self.bias=np.random.randint(2)
-
-    #aplica funcao de dot product a usa funcao de ativacao ReLU
-    def predict(self, X, Z=0):
-        Z=0
-        for weight in (self.weights):
-            for x in X:
-                Z+= weight * x
-        Z+=self.bias
-        prediction=nn_func.activation_ReLU(Z)
-        return prediction
-    
-    #calculate the error for that specific prediction
-    def calculate_error(self, prediction, label):
-        loss= label-prediction
-        return loss
-
-
-features=np.array([[0,0],
-                   [0,1],
-                   [1,0],
-                   [1,1]])
-
-labels=np.array([0,0,0,1])
-
-
-epochs=100
-num_features=len(features)
-p1=Perceptron(learning_rate=0.01, n_features=num_features)
-
-
-class TrainPerceptron:
-    def __init__(self, model, features, labels):
+    def __init__(self, features, targets, learning_rate, epoche):
         self.features=features
-        self.labels=labels
-        self.model=model
-        self.losses=[]
-        self.predictions=[]
-
-    def predict(self):
-        for epoch in range(epochs):
-            losses=[]
-            for X, y in zip(features, labels):
-
-                #calculate the sum product and do the activation function
-                prediction=self.model.predict(X)
-
-                #calculate the error of that prediction 
-                loss=self.model.calculate_error(prediction, label=y)
-                losses.append(loss)
-                self.losses.append(loss)
-
-                #optimize model parameters
-                for x in X:
-                    self.model.weights -= self.model.learning_rate * loss * x
-                    self.model.bias -= self.model.learning_rate * loss
-
-            #add the final prediction to the predictions
-            self.predictions.append(prediction)
+        self.targets=targets
+        self.lr=learning_rate
+        self.epoche=epoche
+        self.pesi=np.random.rand(features.shape[1])
+        self.bias=np.random.randint(7)
+        self.errori=[]
 
 
+    def predict(self, feature):
+        predizione=np.dot(feature, self.pesi) + self.bias
+        return 1 if predizione >= 0 else 0
+        
 
-train_perceptron=TrainPerceptron(model=p1, features=features, labels=labels)
-preds=train_perceptron.predict()
-print(preds)
+    def Errore(self, predizione, target):
+        errore=predizione-target
+        return errore
+    
+
+    def aggiornare_pesi(self, errore, feature):
+        self.pesi -= self.lr * (errore) * feature
+        self.bias -= self.lr * errore
+
+
+    def Allenare(self):
+        if self.features.shape > 1: 
+            for epoch in range(self.epoche):
+                for index, feature_batch in enumerate(self.features):
+                    pred_batch=self.predict(feature=feature_batch)
+                    loss_batch=self.Errore(predizione=pred_batch, target=self.targets[index])
+                    self.aggiornare_pesi(errore=loss_batch, target=self.features[index])
+                    loss+=loss_batch
+                if epoch % 5 == 0:
+                    print(f"l'epoca: {epoch}, loss: {loss}")
+                    self.errori.append(loss)
+        else:
+            for epoch in range(self.epoche):
+                pred=self.predict(feature=self.features)
+                loss=self.Errore(predizione=pred)
+                self.aggiornare_pesi(errore=loss, feature=self.features)
+                if epoch % 5 == 0:
+                    print(f"l'epoca: {epoch}, loss: {loss}")
+                    self.errori.append(loss)
+
+            
+            
 

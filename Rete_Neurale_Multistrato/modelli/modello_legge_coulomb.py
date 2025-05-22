@@ -1,5 +1,7 @@
-import matplotlib.pyplot as plt
-import pandas as pd
+import matplotlib.pyplot as plt # type: ignore
+import pandas as pd # type: ignore
+import numpy as np # type: ignore
+
 
 from Rete_Neurale_Multistrato import NeuralNetwork
 from Tools import functions
@@ -15,10 +17,10 @@ K_folds=5
 
 #alleno del modello, e utilizzazione di metriche per valutazione
 NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[9, 6, 3, 1], inputs=3, init_pesi="He", features=data_features, targets=data_targets, epoche=25, learning_rate=0.003)
-processore_dati=processore.Processore(dataset=data, modello=NeuralNet)
+processore_dati=processore.Metriche(dataset=data_path, modello=NeuralNet)
 errore_fold, ordine=processore_dati.cross_validation(K=K_folds, features=data_features, labels=data_targets, funzione_costo="MSE")
 
-predizione_denormalizzate=processore.Processore.denormalizzarePredizione(processore, target=data_targets)
+predizione_denormalizzate=processore.Processore.denormalizzarePredizione(processore, target=data_targets, dataset=data)
 
 
 plt.figure(figsize=(12, 8))
@@ -29,3 +31,15 @@ plt.ylabel("Forza (N)")
 plt.yscale("log")
 plt.grid(True)
 plt.show()
+
+
+plt.figure(figsize=(10, 6))
+plt.plot(NeuralNet.errori, np.arange(0, len(NeuralNet.errori), 1), c="r", label="errore per epoca")
+plt.title("Progresso complessivo del modello")
+plt.xlabel("Iterazioni (epoche)")
+plt.ylabel("Sbaglio")
+plt.grid(True)
+plt.show()
+
+plt.figure(figsize=(12, 8))
+plt.bar()

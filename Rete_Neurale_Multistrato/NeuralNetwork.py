@@ -67,13 +67,11 @@ class nn_Architettura:
     
     #loop di addestramento della rete d'accordo con la quantita di epoche
     def Allenare(self):
+        self.errori=[]
         self.initializzare_pesi()
         for epoch in range(self.epoche):
-            preds=self.Forward()
-            #print(f"predizioni shape: {self.predizioni.shape}")
-            #print(f"target shape: {self.targets.shape}")
+            self.Forward()
             loss=self.Perdita()
-            #print(f"Perdita: {loss}")
             self.Backward(funzione_ativazione="leaky_ReLU")
             if epoch % 5 == 0:
                 print(f"epoca: {epoch}| perdita: {loss}")
