@@ -3,9 +3,9 @@ import pandas as pd # type: ignore
 import numpy as np # type: ignore
 
 
-from Rete_Neurale_Multistrato import NeuralNetwork
-from Tools import functions
-from Tools import processore 
+from src.Rete_Neurale_Multistrato import NeuralNetwork
+from src.Tools import functions
+from src.Tools import processore 
 
 #separazione in del dataset in features e labels
 data_path="Datasets/Dataset_Legge_Di_Coulomb.csv"

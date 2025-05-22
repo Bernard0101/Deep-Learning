@@ -1,5 +1,5 @@
 import numpy as np # type: ignore
-from Tools import functions as nn_func
+from src.Tools import functions as nn_func
 
 
 class Perceptron:
