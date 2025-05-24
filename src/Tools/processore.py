@@ -50,31 +50,62 @@ class Metriche:
 
         return errore_fold, ordine
 
+
 class Processore:
     def __init__(self, dataset, modello):
         self.dataset=pd.read_csv(dataset)
         self.modello=modello
 
     #funzione che scalabilizza i dati 
-    def standartizzareData(dataset):
+    def standardizzare_data(dataset):
         mean=dataset.mean()
         std=dataset.std()
         standard_data=(dataset - mean) / std
         return standard_data
 
     #funzione che denormalizza i dati
-    def denormalizzareData(self, standard_data, colonna):
+    def denormalizzare_data(self, standard_data, colonna):
         mean=colonna.mean()
         std=colonna.std()
         denormalized_data=standard_data * std + mean
         return denormalized_data
 
     #funzione che denormalizza le predizioni
-    def denormalizzarePredizione(self, target, dataset):
+    def denormalizzare_predizione(self, target, dataset):
         mean=target.mean()
         std=target.std()
         data_normalizzata=dataset * std + mean
         return data_normalizzata
+    
+    #funzione che criptofgrafa i dati categorici del datset seguendo l'algoritmo di OneHot-encoding
+    def codificazione_OneHot(self, data_categorica):
+
+        #crea un dizionario contenendo tutte le categorie per ogni valore assegnadoli 
+        categorie_uniche=np.unique(data_categorica)
+        categorie_indici={cat : idx for idx, cat in enumerate(categorie_uniche)}
+        
+        #costruisce la matrice OneHot
+        OneHot=np.zeros((len(data_categorica), len(categorie_indici)), dtype=int)
+        for idx, cat in enumerate(data_categorica):
+            posizione=categorie_indici[cat]
+            OneHot[idx][posizione]=1
+        return OneHot, categorie_indici
+            
+    #funzione che decriptografa i dati categorici del dataset
+    def decodificazione_OneHot(self, OneHot, categorie):
+        OneHot_decodificato=[]
+        for cat_encoded in OneHot:
+            indice=np.where(cat_encoded != 0)
+            cat_decoded=categorie[indice]
+            OneHot_decodificato.append(cat_decoded)
+        return OneHot_decodificato
+                
+        
+
+
+
+
+
 
         
             
