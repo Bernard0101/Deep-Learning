@@ -7,7 +7,7 @@ class nn_Architettura:
         self.features=features
         self.targets=targets
         self.predizioni=[]
-        self.pesi=[np.random.randn(nn_layers[0], inputs)] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
+        self.pesi=[np.random.randn(nn_layers[0], features.shape[1])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
         self.bias=[np.random.randn(nn_layers[i])for i in range(len(nn_layers))] 
         self.inizializzazione=init_pesi
         self.nn_layers=nn_layers
@@ -64,10 +64,18 @@ class nn_Architettura:
         nn_func.nn_optimizers.optimizer_SGD(layers=self.nn_layers, ativazzioni=self.ativazioni,
                                             labels=self.targets, pesi=self.pesi, bias=self.bias, 
                                             lr=self.lr, ativazione=funzione_ativazione)
+        
+    def reset_parametri(self):
+        self.predizioni=[]
+        print(self.predizioni)
+        self.errori=[]
+        self.pesi=[np.random.randn(self.nn_layers[0], self.features.shape[1])] + [np.random.randn(self.nn_layers[i], self.nn_layers[i-1]) for i in range(1, len(self.nn_layers))]
+        self.bias=[np.random.randn(self.nn_layers[i])for i in range(len(self.nn_layers))] 
+        
     
     #loop di addestramento della rete d'accordo con la quantita di epoche
     def Allenare(self):
-        self.errori=[]
+        self.reset_parametri()
         self.initializzare_pesi()
         for epoch in range(self.epoche):
             self.Forward()
@@ -76,6 +84,12 @@ class nn_Architettura:
             if epoch % 5 == 0:
                 print(f"epoca: {epoch}| perdita: {loss}")
                 self.errori.append(loss)
+            
+    
+
+    
+
+
 
 
 

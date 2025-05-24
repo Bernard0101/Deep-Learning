@@ -45,7 +45,8 @@ class Metriche:
 
             self.modello.features=x_train
             self.modello.targets=y_train
-            errore=self.modello.Allenare()
+            self.modello.Allenare()
+            errore=sum(self.modello.errori)
             errore_fold.append(errore)
 
         return errore_fold, ordine
