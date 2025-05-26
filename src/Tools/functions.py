@@ -74,23 +74,45 @@ class nn_optimizers:
         pass
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
-    def optimizer_SGD(layers, ativazzioni, labels, pesi, bias, lr, ativazione):
+    def optimizer_SGD(layers, attivazzioni, targets, pesi, bias, lr):
         for layer in reversed(range(len(layers))):
-            ativazzione_pregressa=ativazzioni[layer-1]
-            ativazzione_corrente=ativazzioni[layer]
+            attivazzione_pregressa=attivazzioni[layer-1]
+            attivazzione_corrente=attivazzioni[layer]
 
-            derivata_errore=nn_functions.Loss_MSE_derivative(y_pred=ativazzione_pregressa.T, y_label=labels)
+            derivata_errore=nn_functions.Loss_MSE_derivative(y_pred=attivazzione_pregressa.T, y_label=targets)
 
-            derivata_ativazione=nn_functions.activation_leaky_ReLU_derivative(Z=ativazzione_corrente)
+            derivata_attivazione=nn_functions.activation_leaky_ReLU_derivative(Z=attivazzione_corrente)
 
-            gradiente=derivata_ativazione * derivata_errore
+            gradiente=derivata_attivazione * derivata_errore
 
-            gradiente_pesi=np.dot(ativazzione_pregressa.T, gradiente) / len(labels)
-            gradiente_bias=np.sum(gradiente, axis=0, keepdims=True) / len(labels)
+            gradiente_pesi=np.dot(gradiente.T, attivazzione_pregressa) / len(targets)
+            gradiente_bias=np.sum(gradiente, axis=0, keepdims=True) / len(targets)
 
-            pesi[layer] -= lr * gradiente_pesi.T
+            pesi[layer] -= lr * gradiente_pesi
             bias[layer] -= lr * gradiente_bias.reshape(-1)
 
 
-    def optimizer_Momentum():
-        pass
+    def optimizer_Adagrad(layers, attivazioni, targets, pesi, bias, lr, e=1e-8):
+        cache_gradienti_pesi=[np.zeros_like(p) for p in pesi]
+        cache_gradienti_bias=[np.zeros_like(b) for b in bias]
+        for layer in reversed(range(len(layers))):
+            attivazione_pregressa=attivazioni[layer-1]
+            attivazione_corrente=attivazioni[layer]
+
+            if layer == len(layers):
+                derivata_errore=nn_functions.Loss_MSE_derivative(y_pred=attivazione_corrente, y_label=targets)
+            else:
+                derivata_errore=nn_functions.Loss_MSE_derivative(y_pred=attivazione_pregressa.T, y_label=targets)
+            
+            derivata_attivazione=nn_functions.activation_leaky_ReLU_derivative(Z=attivazione_corrente)
+
+            gradiente=derivata_attivazione * derivata_errore
+
+            gradiente_pesi=np.dot(gradiente.T, attivazione_pregressa) / len(targets)
+            gradiente_bias=np.sum(gradiente, axis=0) / len(targets)
+
+            cache_gradienti_pesi[layer] += (gradiente_pesi ** 2)
+            cache_gradienti_bias[layer] += (gradiente_bias ** 2)
+
+            pesi[layer] -= (lr / np.sqrt(cache_gradienti_pesi[layer] + e) * gradiente_pesi)
+            bias[layer] -= (lr / np.sqrt(cache_gradienti_bias[layer] + e) * gradiente_bias.reshape(-1))

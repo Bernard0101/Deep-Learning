@@ -58,7 +58,9 @@ Fornisce l'implementazione di diversi algoritmi che permettono all'utente di pul
 
 - **Aggiungere Esempi:** Fornire esempi pratici e visualizzazioni per dimostrare il funzionamento dei modelli.
 
-- **Validazione:** Implementare alcuni atri tipi di validazione per i modeli di rete neurale, come "confusion matrix"...
+- **Validazione:** Implementare alcuni atri tipi di validazione per i modeli di rete neurale, come: confusion matrix, ROC...
+
+- **Aggiungere altri Ottimizzatori:** aggiungere altri ottimizzattori oltre lo SGD, Come: Adagrad, Momentum...
 
 ---
 

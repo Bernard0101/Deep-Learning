@@ -3,7 +3,7 @@ import numpy as np  # type: ignore
 
 
 class nn_Architettura:
-    def __init__(self, nn_layers, init_pesi, inputs, features, targets, epoche, learning_rate):
+    def __init__(self, nn_layers, init_pesi, features, targets, epoche, learning_rate, ottimizzattore):
         self.features=features
         self.targets=targets
         self.predizioni=[]
@@ -15,6 +15,7 @@ class nn_Architettura:
         self.errori=[]
         self.epoche=epoche
         self.lr=learning_rate
+        self.optim=ottimizzattore
 
     #implementa un layer qualsiasi della rete Neurale Multistrato
     def nn_ArcLayer(self, in_features, layer):
@@ -60,14 +61,18 @@ class nn_Architettura:
         return perdita
     
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
-    def Backward(self, funzione_ativazione):
-        nn_func.nn_optimizers.optimizer_SGD(layers=self.nn_layers, ativazzioni=self.ativazioni,
-                                            labels=self.targets, pesi=self.pesi, bias=self.bias, 
-                                            lr=self.lr, ativazione=funzione_ativazione)
+    def Backward(self, optim="SGD"):
+        if optim == "SGD":
+            nn_func.nn_optimizers.optimizer_SGD(layers=self.nn_layers, attivazzioni=self.ativazioni,
+                                                targets=self.targets, pesi=self.pesi, bias=self.bias, 
+                                                lr=self.lr)
+        elif optim == "Adagrad":
+            nn_func.nn_optimizers.optimizer_Adagrad(layers=self.nn_layers, attivazioni=self.ativazioni, 
+                                                    targets=self.targets, pesi=self.pesi, bias=self.bias,
+                                                    lr=self.lr)
         
     def reset_parametri(self):
         self.predizioni=[]
-        print(self.predizioni)
         self.errori=[]
         self.pesi=[np.random.randn(self.nn_layers[0], self.features.shape[1])] + [np.random.randn(self.nn_layers[i], self.nn_layers[i-1]) for i in range(1, len(self.nn_layers))]
         self.bias=[np.random.randn(self.nn_layers[i])for i in range(len(self.nn_layers))] 
@@ -80,7 +85,7 @@ class nn_Architettura:
         for epoch in range(self.epoche):
             self.Forward()
             loss=self.Perdita()
-            self.Backward(funzione_ativazione="leaky_ReLU")
+            self.Backward(optim=self.optim)
             if epoch % 5 == 0:
                 print(f"epoca: {epoch}| perdita: {loss}")
                 self.errori.append(loss)
