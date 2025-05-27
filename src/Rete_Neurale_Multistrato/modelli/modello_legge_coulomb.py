@@ -18,7 +18,7 @@ data_targets=data_std["Forza (N)"].values
 K_folds=5
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[9, 6, 3, 1], init_pesi="He", features=data_features, targets=data_targets, epoche=25, learning_rate=0.003, ottimizzattore="SGD")
+NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[9, 6, 3, 1], init_pesi="He", features=data_features, targets=data_targets, epoche=25, learning_rate=0.003, ottimizzattore="Adagrad")
 processore_dati=processore.Metriche(dataset=data_path, modello=NeuralNet)
 errore_folds, ordine=processore_dati.cross_validation(K=K_folds, features=data_features, labels=data_targets, funzione_costo="MSE")
 

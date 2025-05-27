@@ -1,5 +1,4 @@
 import numpy as np # type: ignore
-from src.Tools import functions as nn_func
 
 
 class Perceptron:
@@ -8,46 +7,43 @@ class Perceptron:
         self.targets=targets
         self.lr=learning_rate
         self.epoche=epoche
-        self.pesi=np.random.rand(features.shape[1])
+        self.pesi=np.random.randn(features.shape[1])
         self.bias=np.random.randint(7)
+        self.predizioni=[]
         self.errori=[]
 
 
     def predict(self, feature):
-        predizione=np.dot(feature, self.pesi) + self.bias
+        #print(f"feature: {feature} pesi: {self.pesi}" )
+        predizione=np.dot(feature, self.pesi)
+        predizione=np.sum(predizione) + self.bias
         return 1 if predizione >= 0 else 0
         
 
     def Errore(self, predizione, target):
-        errore=predizione-target
+        #print(f"predizione {predizione} target: {target}")
+        errore=np.mean(predizione-target)
         return errore
     
 
     def aggiornare_pesi(self, errore, feature):
-        self.pesi -= self.lr * (errore) * feature
+        #print(f"errore shape: {errore} feature shape: {feature} pesi shape: {self.pesi}")
+        self.pesi -= self.lr * errore * feature
         self.bias -= self.lr * errore
 
 
     def Allenare(self):
-        if self.features.shape > 1: 
-            for epoch in range(self.epoche):
-                for index, feature_batch in enumerate(self.features):
-                    pred_batch=self.predict(feature=feature_batch)
-                    loss_batch=self.Errore(predizione=pred_batch, target=self.targets[index])
-                    self.aggiornare_pesi(errore=loss_batch, target=self.features[index])
-                    loss+=loss_batch
-                if epoch % 5 == 0:
-                    print(f"l'epoca: {epoch}, loss: {loss}")
-                    self.errori.append(loss)
-        else:
-            for epoch in range(self.epoche):
-                pred=self.predict(feature=self.features)
-                loss=self.Errore(predizione=pred)
-                self.aggiornare_pesi(errore=loss, feature=self.features)
-                if epoch % 5 == 0:
-                    print(f"l'epoca: {epoch}, loss: {loss}")
-                    self.errori.append(loss)
+        for epoch in range(self.epoche):
+            for batch in range(self.features.shape[0]):
+                #print(self.features[batch])
+                pred=self.predict(feature=self.features[batch])
+                #print(f"predizione: {pred}, target: {self.targets[batch]}")
+                error=self.Errore(predizione=pred, target=self.targets[batch])
+                #print(f"errore: {error}, feature: {self.features[batch]}")
+                self.aggiornare_pesi(errore=error, feature=self.features[batch])
+            if epoch % 5 == 0:
+                print(f"epoca: {epoch} perdita: {error}")
+              
 
-            
-            
+
 
