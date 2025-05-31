@@ -2,7 +2,7 @@ import numpy as np # type: ignore
 import pandas as pd # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
-from src.Tools import functions
+from src.Tools import functions as nn_func
 
 class Metriche:
 
@@ -37,17 +37,26 @@ class Metriche:
         feature_folds=[features[i*fold_size:fold_size*(i+1)]for i in range(K)]
         label_folds=[labels[i*fold_size:fold_size*(i+1)]for i in range(K)]
 
-        #prendere la parte di test e training
-        for i in range(K):
-            print(f"========================================\nAlleno {i}")
-            x_train=np.concatenate(feature_folds, axis=0)
-            y_train=np.concatenate(label_folds, axis=0)
 
-            self.modello.features=x_train
-            self.modello.targets=y_train
+        #allenare e testare modello
+        for i in range(K-1):
+            print(f"========================================\nAlleno fold: {i}")
+            x_train=feature_folds[i]
+            y_train=label_folds[i]
+
+            #print(f"X_train: {x_train}")
+            #print(f"y_train: {y_train}")
+
+            self.modello.features=x_train # un array con 150 elementi
+            self.modello.targets=y_train # un array con 150 elementi
             self.modello.Allenare()
-            errore=sum(self.modello.errori)
-            errore_fold.append(errore)
+            errore_fold.append(np.mean(self.modello.errori))
+            
+            
+            print(f"media Errore Modello: {np.mean(self.modello.errori)}")
+        print(f"====================================\nTeste fold: {K}")
+        self.modello.Allenare()
+
 
         return errore_fold, ordine
 
@@ -72,10 +81,10 @@ class Processore:
         return denormalized_data
 
     #funzione che denormalizza le predizioni
-    def denormalizzare_predizione(self, target, dataset):
-        mean=target.mean()
-        std=target.std()
-        data_normalizzata=dataset * std + mean
+    def denormalizzare_predizione(self, original_target, standard_pred):
+        mean=original_target.mean()
+        std=original_target.std()
+        data_normalizzata=standard_pred * std + mean
         return data_normalizzata
     
     #funzione che criptofgrafa i dati categorici del datset seguendo l'algoritmo di OneHot-encoding

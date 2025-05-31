@@ -42,7 +42,7 @@ class nn_functions:
 
     #MAE Loss
     def Loss_MAE(y_pred, y_label):
-        return np.mean(y_pred-y_label)
+        return np.abs(np.mean(y_pred-y_label))
 
     def Loss_MAE_derivative(y_pred, y_label):
         n = len(y_label)
@@ -51,12 +51,12 @@ class nn_functions:
         return gradients    
 
     #Binary Cross Entropy Loss
-    def Loss_Binary_Cross_Entropy(y_pred, y_label):
+    def Loss_BCE(y_pred, y_label):
         y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
         loss = -np.mean(y_label * np.log(y_pred) + (1 - y_label) * np.log(1 - y_pred))
         return loss
 
-    def Loss_Binary_Cross_Entropy_derivative(y_pred, y_label):
+    def Loss_BCE_derivative(y_pred, y_label):
         y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
         derivative = -(y_label / y_pred) + (1 - y_label) / (1 - y_pred)
         return derivative
@@ -81,7 +81,7 @@ class nn_optimizers:
 
             derivata_errore=nn_functions.Loss_MSE_derivative(y_pred=attivazzione_pregressa.T, y_label=targets)
 
-            derivata_attivazione=nn_functions.activation_leaky_ReLU_derivative(Z=attivazzione_corrente)
+            derivata_attivazione=nn_functions.activation_tanh_derivative(Z=attivazzione_corrente)
 
             gradiente=derivata_attivazione * derivata_errore
 
