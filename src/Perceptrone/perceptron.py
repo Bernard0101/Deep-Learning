@@ -13,20 +13,20 @@ class Perceptron:
         self.errori=[]
 
 
-    def predict(self, feature):
+    def predict(self, feature:np.ndarray):
         #print(f"feature: {feature} pesi: {self.pesi}" )
         predizione=np.dot(feature, self.pesi)
         predizione=np.sum(predizione) + self.bias
         return 1 if predizione >= 0 else 0
         
 
-    def Errore(self, predizione, target):
+    def Errore(self, predizione:np.ndarray, target:np.ndarray):
         #print(f"predizione {predizione} target: {target}")
         errore=np.mean(predizione-target)
         return errore
     
 
-    def aggiornare_pesi(self, errore, feature):
+    def aggiornare_pesi(self, errore:float, feature:np.ndarray):
         #print(f"errore shape: {errore} feature shape: {feature} pesi shape: {self.pesi}")
         self.pesi -= self.lr * errore * feature
         self.bias -= self.lr * errore

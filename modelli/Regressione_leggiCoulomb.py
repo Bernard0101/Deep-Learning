@@ -29,22 +29,20 @@ K_folds=5
 print(data.head())
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[1, 16, 32, 16, 1], init_pesi="Xavier", features=data_features, targets=data_targets, 
-                                        epoche=450, learning_rate=0.01, ottimizzattore="SGD", funzione_perdita="MSE")
+NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[1, 8, 6, 8, 1], init_pesi="Xavier", features=data_features, targets=data_targets, 
+                                        epoche=300, learning_rate=0.006, ottimizzattore="SGD", funzione_perdita="MSE")
 
 
 processore_dati=processore.Metriche(dataset=data_path, modello=NeuralNet)
 
-errore_folds, ordine=processore_dati.cross_validation(K=K_folds, features=data_features, labels=data_targets, funzione_costo="MSE")
 
-
+errore_folds=processore_dati.cross_validation(K=K_folds, features=data_features, labels=data_targets, funzione_costo="MSE")
 pred=NeuralNet.predict(features=data_features)
 predizione_denormalizzate=processore.Processore.denormalizzare_predizione(processore, original_target=data_targets, standard_pred=pred)
-
 print(f"perdita MAE: {nn_func.nn_functions.Loss_MAE(y_pred=predizione_denormalizzate, y_label=data['Forza (N)'].values)}")
 
 
-
+plt.figure(figsize=(10, 6))
 plt.scatter(data["Termine_fisico"].values, data["Forza (N)"].values)
 plt.xlabel("Termine Fisico")
 plt.ylabel("Forza (N)")
@@ -63,7 +61,7 @@ plt.show()
 
 
 plt.figure(figsize=(10, 6))
-plt.plot(NeuralNet.errori, np.arange(0, len(NeuralNet.errori), 1), c="red", label="Errore alleno")
+plt.plot(NeuralNet.errori, np.arange(0, NeuralNet.epoche, 1), c="red", label="Errore alleno")
 plt.title("Progresso complessivo del modello")
 plt.xlabel("Iterazioni (epoche)")
 plt.ylabel("Sbaglio")

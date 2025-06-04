@@ -29,8 +29,6 @@ class Metriche:
         #mescola i dati ogni volta che e necessario esseguire una nuova validazione
         indices=np.arange(len(features))
         np.random.shuffle(indices)
-        ordine=indices.copy()
-
         features, labels=np.array(features[indices]), np.array(labels[indices])
 
         #crea una lista dove ogni elemento di essa e un'altra lista contenente fold size elementi 
@@ -44,8 +42,8 @@ class Metriche:
             x_train=feature_folds[i]
             y_train=label_folds[i]
 
-            #print(f"X_train: {x_train}")
-            #print(f"y_train: {y_train}")
+            print(f"X_train: {x_train.shape}")
+            print(f"y_train: {y_train.shape}")
 
             self.modello.features=x_train # un array con 150 elementi
             self.modello.targets=y_train # un array con 150 elementi
@@ -58,7 +56,7 @@ class Metriche:
         self.modello.Allenare()
 
 
-        return errore_fold, ordine
+        return errore_fold
 
 
 class Processore:

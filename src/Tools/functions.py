@@ -1,5 +1,6 @@
 import numpy as np # type: ignore
 
+
 class nn_functions:
     def __init__(self):
         pass
@@ -74,22 +75,55 @@ class nn_optimizers:
         pass
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
-    def optimizer_SGD(layers, attivazzioni, targets, pesi, bias, lr):
+    def optimizer_SGD(layers:list, attivazzioni:list, somme_pesate:list, targets:np.ndarray, pesi, bias, lr):
+        gradiente_pesi=[np.ones_like(p) for p in pesi]
+        gradiente_bias=[np.ones_like(b) for b in bias]
+        
         for layer in reversed(range(len(layers))):
-            attivazzione_pregressa=attivazzioni[layer-1]
             attivazzione_corrente=attivazzioni[layer]
+            attivazzione_seguente=attivazzioni[layer-1] 
 
-            derivata_errore=nn_functions.Loss_MSE_derivative(y_pred=attivazzione_pregressa.T, y_label=targets)
+            #print(f"\nretroprogazione strato: {layer}")
+            if layer == (len(layers)-1):    
+                derivata_perdita=nn_functions.Loss_MSE_derivative(y_pred=attivazzione_corrente, y_label=targets)
+                derivata_attivazione=nn_functions.activation_tanh_derivative(Z=somme_pesate[layer])
+                derivata_somma_pesata=attivazzione_corrente
 
-            derivata_attivazione=nn_functions.activation_tanh_derivative(Z=attivazzione_corrente)
+                #print(f"derivata perdita: {derivata_perdita}")
+                #print(f"derivata attivazione: {derivata_attivazione.shape}")
+                #print(f"derivata somma pesata: {derivata_somma_pesata.shape}")
 
-            gradiente=derivata_attivazione * derivata_errore
+                gradiente_pesi[layer]=np.dot(derivata_attivazione.T, derivata_somma_pesata) * derivata_perdita
+                gradiente_bias[layer]=np.dot(derivata_attivazione.T, derivata_somma_pesata) * derivata_perdita
 
-            gradiente_pesi=np.dot(gradiente.T, attivazzione_pregressa) / len(targets)
-            gradiente_bias=np.sum(gradiente, axis=0, keepdims=True) / len(targets)
+                #print(f"gradiente_output: {gradiente_pesi[layer]}")
 
-            pesi[layer] -= lr * gradiente_pesi
-            bias[layer] -= lr * gradiente_bias.reshape(-1)
+                pesi[layer] -= lr * gradiente_pesi[layer]
+                #bias[layer] -= lr * gradiente_bias[layer]
+            else:
+                derivata_attivazione=nn_functions.activation_tanh_derivative(Z=somme_pesate[layer])
+                derivata_somma_pesata=attivazzione_seguente
+
+                #print(f"derivata attivazione: {derivata_attivazione.shape}")
+                #print(f"derivata somma pesata: {derivata_somma_pesata.shape}")
+                #print(f"gradiente errore successivo: {gradiente_pesi[layer].shape}")
+
+                gradiente_pesi[layer]=np.dot(derivata_somma_pesata.T, derivata_attivazione) * gradiente_pesi[layer].T
+
+                #print(f"gradiente_output: {gradiente_pesi[layer]}\n\nshape gradiente output: {gradiente_pesi[layer].shape}")
+                #print(f"shape pesi strato {layer} -> {pesi[layer].shape}")
+                #print(f"learning rate: {lr}")
+
+                pesi[layer] -= lr * gradiente_pesi[layer].T
+                bias[layer] -= lr * gradiente_bias[layer]
+
+
+
+
+            
+           
+
+
 
 
     def optimizer_Adagrad(layers, attivazioni, targets, pesi, bias, lr, e=1e-8):
