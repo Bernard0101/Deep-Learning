@@ -11,43 +11,29 @@ data_path="Datasets/fisica_Legge_Coulomb.csv"
 data=pd.read_csv(data_path)
 
 #feature engineering per rendere le features piu adatte all'apprendimento della rete
-data["Termine_fisico"]=abs(data["Carga 1 (Coulombs)"] * data["Carga 2 (Coulombs)"] / data["Distanza (m)"] ** 2)
-
-termine_fisico=data["Termine_fisico"].values
-forza=data["Forza (N)"].values
-
-data["log_Termine_fisico"]=np.log10(data["Termine_fisico"].values + 1e-12)
-data["log_Forza (N)"]=np.log10(data["Forza (N)"].values + 1e-6)
-
 data_std=processore.Processore.standardizzare_data(dataset=data)
 
 #separazione del dataset in features e labels
-data_features=data_std[["log_Termine_fisico"]].values
-data_targets=data_std["log_Forza (N)"].values
+print(data.head())
+data_features=data_std[["Carga 1 (Coulombs)", "Carga 2 (Coulombs)", "Distanza (m)"]].values
+data_targets=data_std["Forza (N)"].values
 K_folds=5
 
-print(data.head())
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[1, 8, 6, 8, 1], init_pesi="Xavier", features=data_features, targets=data_targets, 
-                                        epoche=300, learning_rate=0.006, ottimizzattore="SGD", funzione_perdita="MSE")
+NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", features=data_features, targets=data_targets, 
+                                        epoche=75, learning_rate=0.0003, ottimizzattore="SGD", funzione_perdita="MSE")
 
 
 processore_dati=processore.Metriche(dataset=data_path, modello=NeuralNet)
 
 
-errore_folds=processore_dati.cross_validation(K=K_folds, features=data_features, labels=data_targets, funzione_costo="MSE")
+errore_folds=processore_dati.cross_validation(K=K_folds, features=data_features, labels=data_targets)
 pred=NeuralNet.predict(features=data_features)
 predizione_denormalizzate=processore.Processore.denormalizzare_predizione(processore, original_target=data_targets, standard_pred=pred)
 print(f"perdita MAE: {nn_func.nn_functions.Loss_MAE(y_pred=predizione_denormalizzate, y_label=data['Forza (N)'].values)}")
 
 
-plt.figure(figsize=(10, 6))
-plt.scatter(data["Termine_fisico"].values, data["Forza (N)"].values)
-plt.xlabel("Termine Fisico")
-plt.ylabel("Forza (N)")
-plt.title("Distribuzione dei dati")
-plt.show()
 
 
 plt.figure(figsize=(12, 8))
@@ -60,18 +46,21 @@ plt.grid(True)
 plt.show()
 
 
-plt.figure(figsize=(10, 6))
-plt.plot(NeuralNet.errori, np.arange(0, NeuralNet.epoche, 1), c="red", label="Errore alleno")
-plt.title("Progresso complessivo del modello")
-plt.xlabel("Iterazioni (epoche)")
-plt.ylabel("Sbaglio")
-plt.grid(True)
-plt.legend()
+fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+for i, ax in enumerate(asse.flatten()):
+    ax.plot(np.arange(0, NeuralNet.epoche, 1), errore_folds[i], c="red", label=f"Errore folder {i+1}")
+    ax.set_title(f"Errore folder {i+1}")
+    ax.set_xlabel("Iterazioni (epoche)")
+    ax.set_ylabel("Sbaglio")
+    ax.grid(True)
+    ax.legend()
+fig.suptitle("Analisi Progresso complessivo del modello")
 plt.show()
 
+media_errore_folds=[np.mean(i) for i in errore_folds]
 
 plt.figure(figsize=(12, 8))
-plt.bar(np.arange(0, len(errore_folds), 1), errore_folds, color="deepskyblue", label="Errore per fold")
+plt.bar(np.arange(0, len(errore_folds), 1), media_errore_folds, color="deepskyblue", label="Errore per fold")
 plt.title("Analise Validazione-incrociata")
 plt.xlabel("K-folds")
 plt.ylabel("Errore complessivo")

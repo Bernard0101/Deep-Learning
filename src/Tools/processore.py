@@ -2,6 +2,7 @@ import numpy as np # type: ignore
 import pandas as pd # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
+
 from src.Tools import functions as nn_func
 
 class Metriche:
@@ -20,8 +21,8 @@ class Metriche:
         return X_train, y_train, X_test, y_test
 
 
-    def cross_validation(self, K, features, labels, funzione_costo="MSE"):
-        errore_fold=[]
+    def cross_validation(self, K:int, features:np.ndarray, labels:np.ndarray):
+        errore_folds=[]
 
         #crea un numero specifico che divide ugualmente tutti elementi dello dataset
         fold_size=len(features) // K
@@ -36,27 +37,26 @@ class Metriche:
         label_folds=[labels[i*fold_size:fold_size*(i+1)]for i in range(K)]
 
 
-        #allenare e testare modello
+        #allenare e testare il modello
         for i in range(K-1):
             print(f"========================================\nAlleno fold: {i}")
-            x_train=feature_folds[i]
+            X_train=feature_folds[i]
             y_train=label_folds[i]
 
-            print(f"X_train: {x_train.shape}")
+            print(f"X_train: {X_train.shape}")
             print(f"y_train: {y_train.shape}")
 
-            self.modello.features=x_train # un array con 150 elementi
-            self.modello.targets=y_train # un array con 150 elementi
+            #ogni uno di essi ha una misura uguale a len(features) // K
+            self.modello.features=X_train
+            self.modello.targets=y_train
             self.modello.Allenare()
-            errore_fold.append(np.mean(self.modello.errori))
-            
-            
-            print(f"media Errore Modello: {np.mean(self.modello.errori)}")
+            errore_folds.append(self.modello.errori)    
+
         print(f"====================================\nTeste fold: {K}")
         self.modello.Allenare()
 
-
-        return errore_fold
+        
+        return errore_folds
 
 
 class Processore:

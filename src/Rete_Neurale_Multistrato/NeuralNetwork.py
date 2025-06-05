@@ -49,7 +49,7 @@ class nn_Architettura:
                 Z=self.nn_ArcLayer(in_features=features, layer=layer)
                 self.somme_pesate.append(Z)
                 #print(f"somma pesata strato: {layer} -> {Z.shape}")
-                out_features=nn_func.nn_functions.activation_tanh(Z=Z)
+                out_features=nn_func.nn_functions.activation_leaky_ReLU(Z=Z)
                 #print(f"out_features {out_features.shape}")
                 self.ativazioni.append(out_features)
                 #print(f"attivazioni strato: {layer} -> {out_features.shape} ")
@@ -57,7 +57,7 @@ class nn_Architettura:
                 Z=self.nn_ArcLayer(in_features=out_features, layer=layer)
                 self.somme_pesate.append(Z)
                 #print(f"somma pesata -> {Z.shape}")
-                out_features=nn_func.nn_functions.activation_tanh(Z=Z)
+                out_features=nn_func.nn_functions.activation_leaky_ReLU(Z=Z)
                 self.ativazioni.append(out_features)
                 #print(f"attivazioni -> {out_features.shape} ")
         return out_features

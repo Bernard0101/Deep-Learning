@@ -86,7 +86,7 @@ class nn_optimizers:
             #print(f"\nretroprogazione strato: {layer}")
             if layer == (len(layers)-1):    
                 derivata_perdita=nn_functions.Loss_MSE_derivative(y_pred=attivazzione_corrente, y_label=targets)
-                derivata_attivazione=nn_functions.activation_tanh_derivative(Z=somme_pesate[layer])
+                derivata_attivazione=nn_functions.activation_leaky_ReLU_derivative(Z=somme_pesate[layer])
                 derivata_somma_pesata=attivazzione_corrente
 
                 #print(f"derivata perdita: {derivata_perdita}")
@@ -101,7 +101,7 @@ class nn_optimizers:
                 pesi[layer] -= lr * gradiente_pesi[layer]
                 #bias[layer] -= lr * gradiente_bias[layer]
             else:
-                derivata_attivazione=nn_functions.activation_tanh_derivative(Z=somme_pesate[layer])
+                derivata_attivazione=nn_functions.activation_leaky_ReLU_derivative(Z=somme_pesate[layer])
                 derivata_somma_pesata=attivazzione_seguente
 
                 #print(f"derivata attivazione: {derivata_attivazione.shape}")
