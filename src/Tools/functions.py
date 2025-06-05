@@ -4,6 +4,31 @@ import numpy as np # type: ignore
 class nn_functions:
     def __init__(self):
         pass
+
+    def activation(self, type:str, derivata:bool, Z:np.ndarray):
+        if type == "ReLU":
+            if (not derivata):
+                return self.activation_ReLU(Z=Z)
+            else:
+                return self.activation_ReLU_derivative(Z=Z)
+        elif type == "leaky_ReLU":
+            if(not derivata):
+                return self.activation_leaky_ReLU(Z=Z)
+            else:
+                return self.activation_leaky_ReLU_derivative(Z=Z)
+        elif type == "Sigmoid":
+            if (not derivata):
+                return self.activation_Sigmoid(Z=Z)
+            else: 
+                return self.activation_Sigomid_derivative(Z=Z)
+        elif type == "Tanh":
+            if (not derivata):
+                return self.activation_tanh(Z=Z)
+            else: 
+                return self.activation_tanh_derivative(Z=Z)
+        else:
+            raise ValueError(f"la funzione {type} non e supportata")
+
     #ReLU function ativazione
     def activation_ReLU(Z):
         return np.maximum(0, Z)
@@ -33,6 +58,24 @@ class nn_functions:
     def activation_tanh_derivative(Z):
         return 1-(nn_functions.activation_tanh(Z) ** 2)
 
+    def Loss(self, y_pred, y_target, type, derivata):
+        if type == "MAE":
+            if (not derivata):
+                return self.Loss_MAE(y_label=y_target, y_pred=y_pred)
+            else:
+                return self.Loss_MAE_derivative(y_label=y_target, y_pred=y_pred)
+        elif type == "MSE":
+            if (not derivata):
+                return self.Loss_MSE(y_label=y_target, y_pred=y_pred)
+            else: 
+                return self.Loss_MSE_derivative(y_label=y_target, y_pred=y_pred)
+        elif type == "BCE":
+            if (not derivata):
+                return self.Loss_BCE(y_label=y_target, y_pred=y_pred)
+            else:
+                return self.Loss_BCE_derivative(y_label=y_target, y_pred=y_pred)
+        else:
+            raise ValueError(f"funzione di costo {type}, non supportata")
 
     #mse Loss
     def Loss_MSE(y_pred, y_label):
@@ -75,7 +118,7 @@ class nn_optimizers:
         pass
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
-    def optimizer_SGD(layers:list, attivazzioni:list, somme_pesate:list, targets:np.ndarray, pesi, bias, lr):
+    def optimizer_SGD(layers:list, attivazzioni:list, somme_pesate:list, targets:np.ndarray, pesi, bias, lr, activation_fn, loss_fn):
         gradiente_pesi=[np.ones_like(p) for p in pesi]
         gradiente_bias=[np.ones_like(b) for b in bias]
         
@@ -85,8 +128,8 @@ class nn_optimizers:
 
             #print(f"\nretroprogazione strato: {layer}")
             if layer == (len(layers)-1):    
-                derivata_perdita=nn_functions.Loss_MSE_derivative(y_pred=attivazzione_corrente, y_label=targets)
-                derivata_attivazione=nn_functions.activation_leaky_ReLU_derivative(Z=somme_pesate[layer])
+                derivata_perdita=nn_functions.Loss(nn_functions, y_pred=attivazzione_corrente, y_target=targets, type=loss_fn, derivata=1)
+                derivata_attivazione=nn_functions.activation(nn_functions, Z=somme_pesate[layer], type=activation_fn, derivata=1)
                 derivata_somma_pesata=attivazzione_corrente
 
                 #print(f"derivata perdita: {derivata_perdita}")
@@ -101,7 +144,7 @@ class nn_optimizers:
                 pesi[layer] -= lr * gradiente_pesi[layer]
                 #bias[layer] -= lr * gradiente_bias[layer]
             else:
-                derivata_attivazione=nn_functions.activation_leaky_ReLU_derivative(Z=somme_pesate[layer])
+                derivata_attivazione=nn_functions.activation(nn_functions, Z=somme_pesate[layer], type=activation_fn ,derivata=1)
                 derivata_somma_pesata=attivazzione_seguente
 
                 #print(f"derivata attivazione: {derivata_attivazione.shape}")
@@ -115,13 +158,7 @@ class nn_optimizers:
                 #print(f"learning rate: {lr}")
 
                 pesi[layer] -= lr * gradiente_pesi[layer].T
-                bias[layer] -= lr * gradiente_bias[layer]
-
-
-
-
-            
-           
+                #bias[layer] -= lr * gradiente_bias[layer]
 
 
 

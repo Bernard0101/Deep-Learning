@@ -3,7 +3,7 @@ import numpy as np  # type: ignore
 
 
 class nn_Architettura:
-    def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epoche:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str):
+    def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epoche:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
         self.features=features
         self.targets=targets
         self.pesi=[np.random.randn(nn_layers[0], features.shape[1])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
@@ -18,6 +18,7 @@ class nn_Architettura:
         self.lr=learning_rate
         self.optim=ottimizzattore
         self.loss_fn=funzione_perdita
+        self.activation_fn=attivazione
 
     #implementa un layer qualsiasi della rete Neurale Multistrato
     def nn_ArcLayer(self, in_features:np.ndarray, layer:int):
@@ -48,18 +49,17 @@ class nn_Architettura:
             if layer == 0:
                 Z=self.nn_ArcLayer(in_features=features, layer=layer)
                 self.somme_pesate.append(Z)
-                #print(f"somma pesata strato: {layer} -> {Z.shape}")
-                out_features=nn_func.nn_functions.activation_leaky_ReLU(Z=Z)
-                #print(f"out_features {out_features.shape}")
+                print(f"somma pesata strato: {layer} -> {Z.shape}")
+                out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=0)
                 self.ativazioni.append(out_features)
-                #print(f"attivazioni strato: {layer} -> {out_features.shape} ")
+                print(f"attivazioni strato: {layer} -> {out_features.shape} ")
             else: 
                 Z=self.nn_ArcLayer(in_features=out_features, layer=layer)
                 self.somme_pesate.append(Z)
-                #print(f"somma pesata -> {Z.shape}")
-                out_features=nn_func.nn_functions.activation_leaky_ReLU(Z=Z)
+                print(f"somma pesata strato: {layer} -> {Z.shape}")
+                out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=0)
                 self.ativazioni.append(out_features)
-                #print(f"attivazioni -> {out_features.shape} ")
+                print(f"attivazioni starto: {layer} -> {out_features.shape} ")
         return out_features
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
@@ -82,7 +82,7 @@ class nn_Architettura:
         if optim == "SGD":
             nn_func.nn_optimizers.optimizer_SGD(layers=self.nn_layers, attivazzioni=self.ativazioni, somme_pesate=self.somme_pesate,
                                                 targets=self.targets, pesi=self.pesi, bias=self.bias, 
-                                                lr=self.lr)
+                                                lr=self.lr, activation_fn=self.activation_fn, loss_fn=self.loss_fn)
         elif optim == "Adagrad":
             nn_func.nn_optimizers.optimizer_Adagrad(layers=self.nn_layers, attivazioni=self.ativazioni, some_pesate=self.somme_pesate,
                                                 targets=self.targets, pesi=self.pesi, bias=self.bias,
