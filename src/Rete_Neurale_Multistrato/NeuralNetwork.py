@@ -49,17 +49,17 @@ class nn_Architettura:
             if layer == 0:
                 Z=self.nn_ArcLayer(in_features=features, layer=layer)
                 self.somme_pesate.append(Z)
-                print(f"somma pesata strato: {layer} -> {Z.shape}")
+                #print(f"somma pesata strato: {layer} -> {Z.shape}")
                 out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=0)
                 self.ativazioni.append(out_features)
-                print(f"attivazioni strato: {layer} -> {out_features.shape} ")
+                #print(f"attivazioni strato: {layer} -> {out_features.shape} ")
             else: 
                 Z=self.nn_ArcLayer(in_features=out_features, layer=layer)
                 self.somme_pesate.append(Z)
-                print(f"somma pesata strato: {layer} -> {Z.shape}")
+                #print(f"somma pesata strato: {layer} -> {Z.shape}")
                 out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=0)
                 self.ativazioni.append(out_features)
-                print(f"attivazioni starto: {layer} -> {out_features.shape} ")
+                #print(f"attivazioni starto: {layer} -> {out_features.shape} ")
         return out_features
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
