@@ -64,17 +64,8 @@ class nn_Architettura:
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
     def Perdita(self, predizioni:np.ndarray, loss_fn:str):
-        if loss_fn == "MSE":
-            perdita_MSE=nn_func.nn_functions.Loss_MSE(y_pred=predizioni, y_label=self.targets)
-            return perdita_MSE
-        elif loss_fn == "MAE":
-            perdita_MAE=nn_func.nn_functions.Loss_MAE(y_pred=predizioni, y_label=self.targets)
-            return perdita_MAE
-        elif loss_fn == "BCE":
-            perdita_BCE=nn_func.nn_functions.Loss_BCE(y_pred=predizioni, y_label=self.targets)
-            return perdita_BCE
-        else:
-            raise ValueError(f"funzione di costo {loss_fn} non supportata")
+        nn_func.nn_functions.Loss(nn_func, y_pred=predizioni, y_target=self.targets,
+                                  type=self.loss_fn, derivata=False)        
 
     
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
@@ -104,7 +95,7 @@ class nn_Architettura:
             #itera su features e targets fold, un'esempio alla volta
             preds=self.Forward(features=self.features)
             loss=self.Perdita(predizioni=preds, loss_fn=self.loss_fn)
-            self.Backward(optim=self.optim)
+            gradienti=self.Backward(optim=self.optim)
             self.errori.append(loss)
             if epoch % 5 == 0:
                 print(f"epoca: {epoch}| perdita: {loss}")

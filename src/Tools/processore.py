@@ -88,23 +88,25 @@ class Processore:
     #funzione che criptofgrafa i dati categorici del datset seguendo l'algoritmo di OneHot-encoding
     def codificazione_OneHot(self, data_categorica):
 
-        #crea un dizionario contenendo tutte le categorie per ogni valore assegnadoli 
+        #crea un dizionario contenendo tutte le categorie per ogni valore assegnandoli 
         categorie_uniche=np.unique(data_categorica)
-        categorie_indici={cat : idx for idx, cat in enumerate(categorie_uniche)}
+        categorie_indici={idx : cat for idx, cat in enumerate(categorie_uniche)}
         
         #costruisce la matrice OneHot
         OneHot=np.zeros((len(data_categorica), len(categorie_indici)), dtype=int)
         for idx, cat in enumerate(data_categorica):
-            posizione=categorie_indici[cat]
-            OneHot[idx][posizione]=1
-        return OneHot, categorie_indici
+            pos_OneHot=np.where(categorie_uniche == cat)[0][0]
+            OneHot[idx][pos_OneHot]=1
+        return categorie_indici, OneHot
             
+
+
     #funzione che decriptografa i dati categorici del dataset
-    def decodificazione_OneHot(self, OneHot, categorie):
+    def decodificazione_OneHot(self, OneHot, categorie_indici):
         OneHot_decodificato=[]
         for cat_encoded in OneHot:
-            indice=np.where(cat_encoded != 0)
-            cat_decoded=categorie[indice]
+            indice=np.where(cat_encoded != 0)[0][0]
+            cat_decoded=categorie_indici.get(indice)
             OneHot_decodificato.append(cat_decoded)
         return OneHot_decodificato
                 

@@ -21,8 +21,9 @@ K_folds=5
 
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", features=data_features, targets=data_targets, 
-                                        epoche=75, learning_rate=0.0003, ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
+NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", epoche=50,
+                                        features=data_features, targets=data_targets, learning_rate=0.003, 
+                                        ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 
 
 processore_dati=processore.Metriche(dataset=data_path, modello=NeuralNet)
@@ -34,8 +35,6 @@ predizione_denormalizzate=processore.Processore.denormalizzare_predizione(proces
 print(f"perdita MAE: {nn_func.nn_functions.Loss_MAE(y_pred=predizione_denormalizzate, y_label=data['Forza (N)'].values)}")
 
 
-
-
 plt.figure(figsize=(12, 8))
 plt.scatter(x=data["Distanza (m)"].values, y=data["Forza (N)"].values, c="darkorange", alpha=0.6)
 plt.yscale("log")
@@ -45,6 +44,8 @@ plt.ylabel("Forza (N)")
 plt.grid(True)
 plt.show()
 
+for i in range(len(NeuralNet.nn_layers)):
+    plt.matshow(A=NeuralNet.pesi[i])
 
 fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 for i, ax in enumerate(asse.flatten()):
