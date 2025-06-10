@@ -14,15 +14,15 @@ data=pd.read_csv(data_path)
 data_std=processore.Processore.standardizzare_data(dataset=data)
 
 #separazione del dataset in features e labels
-print(data.head())
+print(data_std.head())
 data_features=data_std[["Carga 1 (Coulombs)", "Carga 2 (Coulombs)", "Distanza (m)"]].values
 data_targets=data_std["Forza (N)"].values
 K_folds=5
 
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", epoche=50,
-                                        features=data_features, targets=data_targets, learning_rate=0.003, 
+NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", epoche=100,
+                                        features=data_features, targets=data_targets, learning_rate=0.0003, 
                                         ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 
 
@@ -44,8 +44,6 @@ plt.ylabel("Forza (N)")
 plt.grid(True)
 plt.show()
 
-for i in range(len(NeuralNet.nn_layers)):
-    plt.matshow(A=NeuralNet.pesi[i])
 
 fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 for i, ax in enumerate(asse.flatten()):
@@ -61,13 +59,14 @@ plt.show()
 media_errore_folds=[np.mean(i) for i in errore_folds]
 
 plt.figure(figsize=(12, 8))
-plt.bar(np.arange(0, len(errore_folds), 1), media_errore_folds, color="deepskyblue", label="Errore per fold")
+plt.bar(np.arange(0, len(errore_folds), 1), media_errore_folds, color="coral", label="Errore per fold")
 plt.title("Analise Validazione-incrociata")
 plt.xlabel("K-folds")
 plt.ylabel("Errore complessivo")
 plt.grid(True)
 plt.legend()
 plt.show()
+
 
 plt.figure(figsize=(12, 8))
 plt.scatter(x=data["Distanza (m)"].values, y=data["Forza (N)"].values, c="darkorange", alpha=0.6, label="dati reali rumurosi")

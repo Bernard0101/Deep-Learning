@@ -1,9 +1,8 @@
 import numpy as np # type: ignore
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # type: ignore
 
 class nn_functions:
-    def __init__(self):
-        pass
+
 
     def activation(self, type:str, derivata:bool, Z:np.ndarray):
         if type == "ReLU":
@@ -58,6 +57,7 @@ class nn_functions:
     def activation_tanh_derivative(Z):
         return 1-(nn_functions.activation_tanh(Z) ** 2)
 
+
     def Loss(self, y_pred, y_target, type, derivata):
         if type == "MAE":
             if (not derivata):
@@ -82,7 +82,8 @@ class nn_functions:
         else:
             raise ValueError(f"funzione di costo {type}, non supportata")
 
-    #mse Loss
+
+ #mse Loss
     def Loss_MSE(y_pred, y_label):
         return np.mean((y_pred-y_label)**2)
         
@@ -124,14 +125,17 @@ class nn_functions:
         s=nn_functions.Loss_Softmax(Z).reshape(-1, 1) 
         return np.diagflat(s) - np.dot(s, s.T) 
 
+   
+   
+
 class nn_optimizers:
     def __init__(self):
         pass
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
     def optimizer_SGD(layers:list, attivazzioni:list, somme_pesate:list, targets:np.ndarray, pesi, bias, lr, activation_fn, loss_fn):
-        gradiente_pesi=[np.zeros_like(p) for p in pesi]
-        gradiente_bias=[np.zeros_like(b) for b in bias]
+        gradiente_pesi=[np.ones_like(p) for p in pesi]
+        gradiente_bias=[np.ones_like(b) for b in bias]
         
         for layer in reversed(range(len(layers))):
             attivazzione_corrente=attivazzioni[layer]
@@ -143,7 +147,7 @@ class nn_optimizers:
                 derivata_attivazione=nn_functions.activation(nn_functions, Z=somme_pesate[layer], type=activation_fn, derivata=True)
                 derivata_somma_pesata=attivazzione_corrente
 
-                #print(f"derivata perdita: {derivata_perdita.shape}")
+                #print(f"derivata perdita: {derivata_perdita}")
                 #print(f"derivata attivazione: {derivata_attivazione.shape}")
                 #print(f"derivata somma pesata: {derivata_somma_pesata.shape}")
 
@@ -175,7 +179,6 @@ class nn_optimizers:
                 pesi[layer] -= lr * gradiente_pesi[layer].T
                 #bias[layer] -= lr * gradiente_bias[layer]
 
-        return gradiente_pesi
 
 
 

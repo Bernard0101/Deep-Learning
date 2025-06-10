@@ -50,7 +50,7 @@ Fornisce l'implementazione di diversi algoritmi che permettono all'utente di pul
 
 3. **Esegui gli Script:**
    ```bash
-   python -m src/...
+   python -m modelli.
    ```
 
 ## Prossimi Passi

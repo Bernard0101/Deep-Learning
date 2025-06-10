@@ -1,6 +1,6 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
+import pandas as pd # type: ignore
+import matplotlib.pyplot as plt # type: ignore
+import numpy as np # type: ignore
 
 from src.Rete_Neurale_Multistrato import NeuralNetwork
 from src.Tools import processore
@@ -13,7 +13,7 @@ print(data.head())
 features=data[["Tempo (s)","Accelerazione (m/s²)","Velocita (m/s)"]].values
 targets=data["Distanza (m)"].values
 
-NeuralNet=NeuralNetwork.nn_Architettura(features=features, targets=targets, nn_layers=[3, 16, 20, 16, 1], 
+NeuralNet=NeuralNetwork.nn_Architettura(features=features, targets=targets, nn_layers=[3, 8, 6, 8, 1], 
                                         init_pesi="He", attivazione="leaky_ReLU", funzione_perdita="MSE", 
                                         ottimizzattore="SGD", learning_rate=0.001, epoche=50)
 
