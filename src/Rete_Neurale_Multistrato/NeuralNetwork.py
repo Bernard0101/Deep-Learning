@@ -1,4 +1,5 @@
 from src.Tools import functions as nn_func
+from src.Tools import PIML as fisica_func
 import numpy as np  # type: ignore
 
 
@@ -22,7 +23,7 @@ class nn_Architettura:
         self.loss_fn (str): un'iperparametro che sceglie il tipo funzione di perdita verra utilizzata
         self.activation_fn (str): un'iperparametro che sceglie la funzione di attivazione a essere utilzzata
     """
-    def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epoche:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
+    def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epochs:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
         self.features=features
         self.targets=targets
         self.pesi=[np.random.randn(nn_layers[0], features.shape[1])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
@@ -32,7 +33,8 @@ class nn_Architettura:
         self.ativazioni=[]
         self.somme_pesate=[]
         self.errori=[]
-        self.epoche=epoche
+        self.epoche=[]
+        self.epochs=epochs
         self.lr=learning_rate
         self.optim=ottimizzattore
         self.loss_fn=funzione_perdita
@@ -49,7 +51,7 @@ class nn_Architettura:
             layer (int): lo strato corrente
 
         returns:
-            out_features (np.ndarray): la somma pesata tra i pesi e inputs
+            out_features (np.ndarrayova a stampare la sequenza): la somma pesata tra i pesi e inputs
         """
         pesi=self.pesi[layer]
         #print(f"pesi shape: {pesi.shape} features shape: {in_features.shape}")
@@ -60,21 +62,23 @@ class nn_Architettura:
         """
         algortimi di Strategia per inizializzare i pesi come He e Xavier
 
-        params: 
+        params: bias
             init_pesi (str):il tipo di attivazione ad essere utilizzata
 
         returns:
             None
         """
-        #implementa l'ativazzione Xavier
         if init_pesi == "Xavier":
-            Xavier_inizializzazione=np.sqrt(6 / (self.nn_layers[0] + self.nn_layers[-1]))
-            self.pesi=[Xavier_inizializzazione * peso for peso in self.pesi]
+            for i in range(len(self.pesi)):
+                fan_in = self.pesi[i].shape[1]
+                fan_out = self.pesi[i].shape[0]
+                limite = np.sqrt(6 / (fan_in + fan_out))
+                self.pesi[i] = np.random.uniform(-limite, limite, size=self.pesi[i].shape)
 
-        #implementa l'ativazzione He
         elif init_pesi == "He":
-            He_inizialiazzazione=np.sqrt(2 / (self.nn_layers[0]))
-            self.pesi=[He_inizialiazzazione * peso for peso in self.pesi]
+            for i in range(len(self.pesi)):
+                fan_in = self.pesi[i].shape[1]
+                self.pesi[i] = np.random.randn(*self.pesi[i].shape) * np.sqrt(2. / fan_in)
         else:
             raise ValueError(f"funzione di inizializzazione dei pesi: {init_pesi} non supportata")
 
@@ -98,16 +102,20 @@ class nn_Architettura:
                 Z=self.nn_ArcLayer(in_features=features, layer=layer)
                 self.somme_pesate.append(Z)
                 #print(f"somma pesata strato: {layer} -> {Z.shape}")
-                out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=0)
+                out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=False)
                 self.ativazioni.append(out_features)
                 #print(f"attivazioni strato: {layer} -> {out_features.shape} ")
-            else: 
+            elif layer > 0 and layer < len(self.nn_layers): 
                 Z=self.nn_ArcLayer(in_features=out_features, layer=layer)
                 self.somme_pesate.append(Z)
                 #print(f"somma pesata strato: {layer} -> {Z.shape}")
-                out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=0)
+                out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=False)
                 self.ativazioni.append(out_features)
                 #print(f"attivazioni starto: {layer} -> {out_features.shape} ")
+            else:
+                Z=self.nn_ArcLayer(in_features=out_features, layer=layer)
+                self.somme_pesate.append(out_features)
+                #print(f"somma pesata strato: {layer} -> {Z.shape}")
         return out_features
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
@@ -121,8 +129,15 @@ class nn_Architettura:
         returns: 
             None
         """
-        return nn_func.nn_functions.Loss(nn_func.nn_functions, y_pred=predizioni, y_target=self.targets,
-                                  type=self.loss_fn, derivata=False)        
+
+        loss_fisica=fisica_func.Fisica.MSE_leggeCoulomb(fisica_func.Fisica, y_pred=predizioni, features=self.features)
+
+        loss_dati=nn_func.nn_functions.Loss(nn_func.nn_functions, y_pred=predizioni, y_target=self.targets,
+                                  type=self.loss_fn, derivata=False)
+        importanza=1e-7
+        
+        loss_complessiva=loss_dati + loss_fisica * importanza
+        return loss_complessiva
         
 
     
@@ -139,8 +154,8 @@ class nn_Architettura:
         """
         if optim == "SGD":
             nn_func.nn_optimizers.optimizer_SGD(layers=self.nn_layers, attivazzioni=self.ativazioni, somme_pesate=self.somme_pesate,
-                                                targets=self.targets, pesi=self.pesi, bias=self.bias, 
-                                                lr=self.lr, activation_fn=self.activation_fn, loss_fn=self.loss_fn)
+                                                targets=self.targets, features=self.features, pesi=self.pesi, bias=self.bias, 
+                                                lr=self.lr, activation_fn=self.activation_fn, loss_fn=self.loss_fn, legge_fisica=None)
         elif optim == "Adagrad":
             nn_func.nn_optimizers.optimizer_Adagrad(layers=self.nn_layers, attivazioni=self.ativazioni, some_pesate=self.somme_pesate,
                                                 targets=self.targets, pesi=self.pesi, bias=self.bias,
@@ -161,8 +176,18 @@ class nn_Architettura:
         self.pesi=[np.random.randn(self.nn_layers[0], self.features.shape[1])] + [np.random.randn(self.nn_layers[i], self.nn_layers[i-1]) for i in range(1, len(self.nn_layers))]
         self.bias=[np.random.randn(self.nn_layers[i])for i in range(len(self.nn_layers))] 
         self.errori=[]
+
+    def regolarizzazione(self, epoca, patience, min_delta=1e-4):
+        if epoca < patience:
+            return False
+
+        migliore_alleno=min(self.errori[epoca - patience:epoca])
+        current=self.errori[epoca]
+        if migliore_alleno - current < min_delta:
+            return True
+        return False        
         
-    
+                  
     #loop di addestramento della rete d'accordo con la quantita di epoche
     def Allenare(self):
         """
@@ -177,7 +202,7 @@ class nn_Architettura:
         """
         self.reset_parametri()
         self.initializzare_pesi(init_pesi=self.inizializzazione)
-        for epoch in range(self.epoche):
+        for epoch in range(self.epochs):
             #itera su features e targets fold, un'esempio alla volta
             preds=self.Forward(features=self.features)
             #print(f"preds: {preds}")
@@ -185,9 +210,13 @@ class nn_Architettura:
             #print(f"loss: {loss}")
             self.Backward(optim=self.optim)
             self.errori.append(loss)
-            if epoch % 5 == 0:
-                print(f"epoca: {epoch}| perdita: {loss}")
-
+            print(f"epoca: {epoch}| perdita: {loss}")
+            if(self.regolarizzazione(epoca=epoch, patience=15)):
+                self.epoche.append(epoch)
+                break
+            #if epoch % 5 == 0:
+              #      for p in self.pesi:
+               #         print(f"media dei pesi: {np.mean(p)}")
 
     def predict(self, features:np.ndarray):
         predizione=self.Forward(features=features)

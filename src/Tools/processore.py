@@ -22,7 +22,8 @@ class Metriche:
 
 
     def cross_validation(self, K:int, features:np.ndarray, labels:np.ndarray):
-        errore_folds=[]
+        errore_training_folds=[]
+        errore_testing_folds=None
 
         #crea un numero specifico che divide ugualmente tutti elementi dello dataset
         fold_size=len(features) // K
@@ -50,13 +51,14 @@ class Metriche:
             self.modello.features=X_train
             self.modello.targets=y_train
             self.modello.Allenare()
-            errore_folds.append(self.modello.errori)    
+            errore_training_folds.append(self.modello.errori)    
 
         print(f"====================================\nTeste fold: {K}")
         self.modello.Allenare()
+        errore_testing_folds=self.modello.errori
 
         
-        return errore_folds
+        return errore_training_folds, errore_testing_folds
 
 
 class Processore:
@@ -65,16 +67,16 @@ class Processore:
         self.modello=modello
 
     #funzione che scalabilizza i dati 
-    def standardizzare_data(dataset):
-        mean=dataset.mean()
-        std=dataset.std()
-        standard_data=(dataset - mean) / std
+    def standardizzare_data(data):
+        mean=data.mean()
+        std=data.std()
+        standard_data=(data - mean) / std
         return standard_data
 
     #funzione che denormalizza i dati
-    def denormalizzare_data(self, standard_data, colonna):
-        mean=colonna.mean()
-        std=colonna.std()
+    def denormalizzare_data(self, standard_data, normal_data):
+        mean=normal_data.mean()
+        std=normal_data.std()
         denormalized_data=standard_data * std + mean
         return denormalized_data
 

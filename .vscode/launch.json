@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: MRUA",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "modelli.Regressione_MRUA"
+        },
+        {
+            "name": "Python Debugger: LeggiCoulomb",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "modelli.Regressione_leggiCoulomb",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        },
+    ]
+}

@@ -1,3 +1,4 @@
+from src.Tools.PIML import Fisica
 import numpy as np # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
@@ -88,7 +89,10 @@ class nn_functions:
         return np.mean((y_pred-y_label)**2)
         
     def Loss_MSE_derivative(y_pred, y_label):
-        return np.mean(2 * (y_pred-y_label))
+        n=len(y_label)
+        y_label=y_label.reshape(-1, 1)
+        MSE_derivata=-2 * (y_pred-y_label) / n
+        return MSE_derivata
 
     #MAE Loss
     def Loss_MAE(y_pred, y_label):
@@ -96,9 +100,8 @@ class nn_functions:
 
     def Loss_MAE_derivative(y_pred, y_label):
         n = len(y_label)
-        gradients = np.where(y_pred < y_label, -1 / n, 1 / n)
-        gradients[y_pred == y_label] = 0 
-        return gradients    
+        y_label=y_label.reshape(-1, 1)
+        return np.where(y_pred < y_label, -1/n, 1/n)    
 
     #Binary Cross Entropy Loss
     def Loss_BCE(y_pred, y_label):
@@ -122,18 +125,14 @@ class nn_functions:
         return exp_z / np.sum(exp_z)
 
     def Loss_Softmax_derivative(Z):
-        s=nn_functions.Loss_Softmax(Z).reshape(-1, 1) 
-        return np.diagflat(s) - np.dot(s, s.T) 
-
-   
-   
+        s=nn_functions.Loss_Softmax(Z).reshape(-1, 1)
 
 class nn_optimizers:
     def __init__(self):
         pass
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
-    def optimizer_SGD(layers:list, attivazzioni:list, somme_pesate:list, targets:np.ndarray, pesi, bias, lr, activation_fn, loss_fn):
+    def optimizer_SGD(layers:list, attivazzioni:list, somme_pesate:list, features, targets:np.ndarray, pesi, bias, lr, activation_fn, loss_fn, legge_fisica):
         gradiente_pesi=[np.ones_like(p) for p in pesi]
         gradiente_bias=[np.ones_like(b) for b in bias]
         
@@ -142,41 +141,44 @@ class nn_optimizers:
             attivazzione_seguente=attivazzioni[layer-1] 
 
             #print(f"\nretroprogazione strato: {layer}")
-            if layer == (len(layers)-1):    
-                derivata_perdita=nn_functions.Loss(nn_functions, y_pred=attivazzione_corrente, y_target=targets, type=loss_fn, derivata=True)
+            if layer == (len(layers)-1):
+                derivata_loss_fisica=Fisica.MAE_derivata_leggeCoulomb(Fisica, features=features, y_pred=attivazzione_corrente)
+                derivata_loss_data=nn_functions.Loss(nn_functions, y_pred=attivazzione_corrente, y_target=targets, type=loss_fn, derivata=True)
                 derivata_attivazione=nn_functions.activation(nn_functions, Z=somme_pesate[layer], type=activation_fn, derivata=True)
-                derivata_somma_pesata=attivazzione_corrente
 
-                #print(f"derivata perdita: {derivata_perdita}")
+                #print(f"derivata loss data: {derivata_loss_data.shape}")
                 #print(f"derivata attivazione: {derivata_attivazione.shape}")
-                #print(f"derivata somma pesata: {derivata_somma_pesata.shape}")
+                #print(f"derivata loss fisica: {derivata_loss_fisica.shape}")
+                
+                lambda_fisica=1e-7
+                delta_output=(derivata_loss_data + derivata_loss_fisica * lambda_fisica) * derivata_attivazione
 
+                #print(f"delta output: {delta_output.shape}")
 
-                gradiente_pesi[layer]=np.dot(np.dot(derivata_perdita, derivata_attivazione).T, derivata_somma_pesata)
-                gradiente_bias[layer]=np.dot(np.dot(derivata_perdita, derivata_attivazione).T, derivata_somma_pesata)
+                gradiente_pesi[layer]=np.dot(delta_output.T, attivazzione_seguente) / len(targets)
+                gradiente_bias[layer]=np.sum(delta_output, axis=0, keepdims=True) /len(targets)
 
-
-                #print(f"gradiente_output: {gradiente_pesi[layer]}")
+                #print(f"gradiente_output: {gradiente_pesi[layer].shape}")
                 #print(f"pesi {pesi[layer].shape}")
 
                 pesi[layer] -= lr * gradiente_pesi[layer]
                 #bias[layer] -= lr * gradiente_bias[layer]
             else:
                 derivata_attivazione=nn_functions.activation(nn_functions, Z=somme_pesate[layer], type=activation_fn ,derivata=1)
-                derivata_somma_pesata=attivazzione_seguente
 
                 #print(f"derivata attivazione: {derivata_attivazione.shape}")
                 #print(f"derivata somma pesata: {derivata_somma_pesata.shape}")
                 #print(f"gradiente errore successivo: {gradiente_pesi[layer].shape}")
+                delta_output=np.dot(delta_output, pesi[layer + 1]) * derivata_attivazione
 
-                gradiente_pesi[layer]=np.dot(derivata_somma_pesata.T, derivata_attivazione) * gradiente_pesi[layer].T
+                gradiente_pesi[layer]=np.dot(delta_output.T, attivazzione_seguente) / len(targets)
 
 
                 #print(f"gradiente_output: {gradiente_pesi[layer]}\n\nshape gradiente output: {gradiente_pesi[layer].shape}")
                 #print(f"shape pesi strato {layer} -> {pesi[layer].shape}")
                 #print(f"learning rate: {lr}")
 
-                pesi[layer] -= lr * gradiente_pesi[layer].T
+                pesi[layer] -= lr * gradiente_pesi[layer]
                 #bias[layer] -= lr * gradiente_bias[layer]
 
 
