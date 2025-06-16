@@ -9,7 +9,7 @@ from src.Tools import functions as nn_func
 file_path="Datasets/fisica_MRUA.csv"
 data=pd.read_csv(file_path)
 
-data_std=processore.Processore.standardizzare_data(dataset=data)
+data_std=processore.Processore.standardizzare_data(data=data)
 
 print(data.head())
 features=data_std[["Tempo (s)","Accelerazione (m/s²)","Velocita (m/s)"]].values
@@ -17,7 +17,7 @@ targets=data_std["Distanza (m)"].values
 
 NeuralNet=NeuralNetwork.nn_Architettura(features=features, targets=targets, nn_layers=[3, 4, 4, 4, 1], 
                                         init_pesi="He", attivazione="leaky_ReLU", funzione_perdita="MSE", 
-                                        ottimizzattore="SGD", learning_rate=0.001, epoche=50)
+                                        ottimizzattore="SGD", learning_rate=0.001, epochs=50)
 
 Processore=processore.Metriche(modello=NeuralNet, dataset=file_path)
 
@@ -38,7 +38,7 @@ plt.show()
 
 fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 for i, ax in enumerate(asse.flatten()):
-    ax.plot(np.arange(0, NeuralNet.epoche, 1), errore_training_folds[i], color="red")
+    ax.plot(np.arange(0, NeuralNet.epoche[i]+1, 1), errore_training_folds[i], color="red")
     ax.set_title(f"Errore folder {i+1}")
     ax.set_xlabel("Epoche")
     ax.set_ylabel("sbaglio")
@@ -57,7 +57,7 @@ plt.show()
 
 plt.figure(figsize=(12, 8))
 plt.plot(data["Distanza (m)"].values, data["Velocita (m/s)"], color="mediumturquoise", lw=4, label="dati reali")
-plt.plot(pred, data["Velocita (m/s)"].values, color="orangered", lw=3, label="predizioni modello")
+plt.scatter(pred, data["Velocita (m/s)"].values, color="orangered", lw=3, label="predizioni modello")
 plt.title("Analisi Prestazione Modello Compito di Regressione")
 plt.xlabel("distanza (m)")
 plt.ylabel("velocita (m/s)")

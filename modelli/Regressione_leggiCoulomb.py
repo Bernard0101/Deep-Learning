@@ -22,8 +22,8 @@ K_folds=5
 
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 8, 8, 1], init_pesi="He", epochs=100,
-                                        features=data_features, targets=data_targets, learning_rate=3e-3, 
+NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 8, 8, 1], init_pesi="He", epochs=1000,
+                                        features=data_features, targets=data_targets, learning_rate=3e-2, 
                                         ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 
 
@@ -48,6 +48,7 @@ plt.ylabel("Forza (N)")
 plt.grid(True)
 plt.legend()
 plt.show()
+
 
 
 fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
@@ -82,9 +83,9 @@ plt.show()
 
 
 plt.figure(figsize=(12, 8))
-plt.scatter(x=data["Distanza (m)"].values, y=data["Forza (N)"].values, c="mediumblue", alpha=0.4, label="dati reali rumurosi")
+plt.scatter(data["Distanza (m)"].values, data["Forza (N)"].values, c="mediumblue", alpha=0.4, label="dati reali rumurosi")
 plt.scatter(x=data["Distanza (m)"].values, y=forza_elettrica, c="darkorange", alpha=0.6, label="dati basati sulla legge fisica")
-plt.scatter(data["Distanza (m)"].values, predizione_denormalizzate, alpha=0.7, c="limegreen", label="predizione modello")
+plt.scatter(data["Distanza (m)"].values, pred, alpha=0.7, c="limegreen", label="predizione modello")
 plt.yscale("log")
 plt.title("Analise Prestazione modello")
 plt.xlabel("Distanza in metri")
