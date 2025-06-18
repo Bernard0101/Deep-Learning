@@ -2,87 +2,125 @@ from src.Tools.PIML import Fisica
 import numpy as np # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
-class nn_functions:
+class Funzioni_SommaPesata:
+    def __init__(self, X_inputs, W_pesi):
+        self.operazione="SommaPesata"
+        self.inputs=X_inputs
+        self.pesi=W_pesi
+        self.output=None
+
+    def func(self, derivata):
+        if not derivata:
+            return Funzioni_SommaPesata.prodotto_matriciale(X=self.inputs, W=self.pesi)
+        else:    
+            return Funzioni_SommaPesata.derivata_prodotto_matriciale(W=self.pesi)
+
+    def prodotto_matriciale(X, W):
+        return np.dot(X, W)
+            
+    
+    def derivata_prodotto_matriciale(W):
+        return W.T
 
 
-    def activation(self, type:str, derivata:bool, Z:np.ndarray):
+class Funzioni_attivazione:
+    def __init__(self, Z):
+        self.operazione="attivazione"
+        self.input_Z=Z
+        self.output=None
+
+    def func(self, type:str, derivata:bool):
         if type == "ReLU":
             if (not derivata):
-                return self.activation_ReLU(Z=Z)
+                return self.activation_ReLU(Z=self.input_Z)
             else:
-                return self.activation_ReLU_derivative(Z=Z)
+                return self.activation_ReLU_derivative(Z=self.input_Z)
         elif type == "leaky_ReLU":
             if(not derivata):
-                return self.activation_leaky_ReLU(Z=Z)
+                return self.activation_leaky_ReLU(Z=self.input_Z)
             else:
-                return self.activation_leaky_ReLU_derivative(Z=Z)
+                return self.activation_leaky_ReLU_derivative(Z=self.input_Z)
         elif type == "Sigmoid":
             if (not derivata):
-                return self.activation_Sigmoid(Z=Z)
+                return self.activation_Sigmoid(Z=self.input_Z)
             else: 
-                return self.activation_Sigomid_derivative(Z=Z)
+                return self.activation_Sigomid_derivative(Z=self.input_Z)
         elif type == "Tanh":
             if (not derivata):
-                return self.activation_tanh(Z=Z)
+                return self.activation_tanh(Z=self.input_Z)
             else: 
-                return self.activation_tanh_derivative(Z=Z)
+                return self.activation_tanh_derivative(Z=self.input_Z)
         else:
             raise ValueError(f"la funzione {type} non e supportata")
 
     #ReLU function ativazione
-    def activation_ReLU(Z):
-        return np.maximum(0, Z)
+    def activation_ReLU(self, Z):
+        result=np.maxpassimum(0, Z)
+        self.output=result
+        return result
 
-    def activation_ReLU_derivative(Z):
-        return np.where(Z > 0, 1, 0)
+    def activation_ReLU_derivative(self, Z):
+        self.output=np.where(Z > 0, 1, 0)
+        return self.output
 
     #Leaky ReLU variant ativazione
-    def activation_leaky_ReLU(Z, alpha=0.03):
-        return np.where(Z >= 0, Z, alpha * Z)
+    def activation_leaky_ReLU(self, Z, alpha=0.03):
+        self.output=np.where(Z >= 0, Z, alpha * Z)
+        return self.output
 
-    def activation_leaky_ReLU_derivative(Z, alpha=0.03):
-        return np.where(Z > 0, 1, alpha)
+    def activation_leaky_ReLU_derivative(self, Z, alpha=0.03):
+        self.output=np.where(Z > 0, 1, alpha)
+        return self.output
 
     #Sigmoid function ativazione
-    def activation_Sigmoid(Z):
-        return 1 / (1 + np.exp(-Z))
+    def activation_Sigmoid(self, Z):
+        self.output= 1 / (1 + np.exp(-Z))
+        return self.output
 
-    def activation_Sigomid_derivative(Z):
-        s = nn_functions.activation_Sigmoid(Z)
-        return s * (1-s)
+    def activation_Sigomid_derivative(self, Z):
+        s=Funzioni_attivazione.activation_Sigmoid(Z)
+        self.output= s * (1-s)
+        return self.output
 
     #Tanh function ativazione
-    def activation_tanh(Z):
-        return np.sinh(Z)/np.cosh(Z)
+    def activation_tanh(self, Z):
+        self.output=np.sinh(Z)/np.cosh(Z)
+        return self.output
 
-    def activation_tanh_derivative(Z):
-        return 1-(nn_functions.activation_tanh(Z) ** 2)
+    def activation_tanh_derivative(self, Z):
+        return 1-(Funzioni_attivazione.activation_tanh(Z) ** 2)
 
 
-    def Loss(self, y_pred, y_target, type, derivata):
+class Funzioni_Perdita:
+    def __init__(self, y_pred, y_target):
+        self.operazione="Perdita"
+        self.input_pred=y_pred
+        self.input_target=y_target
+        self.output=None
+        
+    def func(self, y_pred, y_target, type, derivata):
         if type == "MAE":
             if (not derivata):
-                return self.Loss_MAE(y_label=y_target, y_pred=y_pred)
+                return self.Loss_MAE(y_label=self.input_target, y_pred=self.input_pred)
             else:
-                return self.Loss_MAE_derivative(y_label=y_target, y_pred=y_pred)
+                return self.Loss_MAE_derivative(y_label=self.input_target, y_pred=self.input_pred)
         elif type == "MSE":
             if (not derivata):
-                return self.Loss_MSE(y_label=y_target, y_pred=y_pred)
+                return self.Loss_MSE(y_label=self.input_target, y_pred=self.input_pred)
             else: 
-                return self.Loss_MSE_derivative(y_label=y_target, y_pred=y_pred)
+                return self.Loss_MSE_derivative(y_label=self.input_target, y_pred=self.input_pred)
         elif type == "BCE":
             if (not derivata):
-                return self.Loss_BCE(y_label=y_target, y_pred=y_pred)
+                return self.Loss_BCE(y_label=self.input_target, y_pred=self.input_pred)
             else:
-                return self.Loss_BCE_derivative(y_label=y_target, y_pred=y_pred)
+                return self.Loss_BCE_derivative(y_label=self.input_target, y_pred=self.input_pred)
         elif type == "CCE":
             if(not derivata):
-                return self.Loss_CCE(y_label=y_target, y_pred=y_pred)
+                return self.Loss_CCE(y_label=self.input_target, y_pred=self.input_pred)
             else:
                 pass
         else:
             raise ValueError(f"funzione di costo {type}, non supportata")
-
 
  #mse Loss
     def Loss_MSE(y_pred, y_label):
@@ -120,12 +158,7 @@ class nn_functions:
         loss=-np.sum(y_label * np.log(y_pred))
         return loss
 
-    def Loss_Softmax(Z):
-        exp_z=np.exp(Z - np.max(Z)) 
-        return exp_z / np.sum(exp_z)
-
-    def Loss_Softmax_derivative(Z):
-        s=nn_functions.Loss_Softmax(Z).reshape(-1, 1)
+  
 
 class nn_optimizers:
     def __init__(self):
@@ -184,5 +217,3 @@ class nn_optimizers:
 
 
 
-
-    f2f2

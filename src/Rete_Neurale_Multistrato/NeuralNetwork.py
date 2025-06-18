@@ -80,10 +80,10 @@ class nn_Architettura:
         loss_complessiva=loss_dati + loss_fisica * importanza
         return loss_complessiva
         
-
     
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
     def Backward(self, optim:str):
+
         if optim == "SGD":
             nn_func.nn_optimizers.optimizer_SGD(layers=self.nn_layers, attivazzioni=self.ativazioni, somme_pesate=self.somme_pesate,
                                                 targets=self.targets, features=self.features, pesi=self.pesi, bias=self.bias, 
@@ -94,7 +94,7 @@ class nn_Architettura:
                                                 lr=self.lr)
         else:
             raise ValueError(f"ottimizzattore {optim} non supportato")
-        
+
     def reset_parametri(self):
         self.pesi=[np.random.randn(self.nn_layers[0], self.features.shape[1])] + [np.random.randn(self.nn_layers[i], self.nn_layers[i-1]) for i in range(1, len(self.nn_layers))]
         self.bias=[np.random.randn(self.nn_layers[i])for i in range(len(self.nn_layers))] 
@@ -139,7 +139,24 @@ class nn_Architettura:
             
     
 
-    
+class Autodifferenziattore:
+    def __init__(self, strati, ):
+        self.passaggi=[]    
+
+    def decodificare_operazione(self, operazione):
+        if 
+
+
+    def memorizzare(self, inputs, outputs, operazione):
+        passaggio=[
+            {"inputs" : inputs},
+            {"outputs" : outputs},
+            {"operazione" : operazione}
+            ]
+        self.passaggi.append(passaggio)
+
+
+
 
 
 
