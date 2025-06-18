@@ -138,7 +138,7 @@ class nn_optimizers:
         
         for layer in reversed(range(len(layers))):
             attivazzione_corrente=attivazzioni[layer]
-            attivazzione_seguente=attivazzioni[layer-1] 
+            attivazzione_pregressa=attivazzioni[layer-1] 
 
             #print(f"\nretroprogazione strato: {layer}")
             if layer == (len(layers)-1):
@@ -150,12 +150,12 @@ class nn_optimizers:
                 #print(f"derivata attivazione: {derivata_attivazione.shape}")
                 #print(f"derivata loss fisica: {derivata_loss_fisica.shape}")
                 
-                lambda_fisica=1e-7
+                lambda_fisica=1e-6
                 delta_output=(derivata_loss_data + derivata_loss_fisica * lambda_fisica) * derivata_attivazione
 
                 #print(f"delta output: {delta_output.shape}")
 
-                gradiente_pesi[layer]=np.dot(delta_output.T, attivazzione_seguente) / len(targets)
+                gradiente_pesi[layer]=np.dot(delta_output.T, attivazzione_pregressa) / len(targets)
                 gradiente_bias[layer]=np.sum(delta_output, axis=0, keepdims=True) /len(targets)
 
                 #print(f"gradiente_output: {gradiente_pesi[layer].shape}")
@@ -171,7 +171,7 @@ class nn_optimizers:
                 #print(f"gradiente errore successivo: {gradiente_pesi[layer].shape}")
                 delta_output=np.dot(delta_output, pesi[layer + 1]) * derivata_attivazione
 
-                gradiente_pesi[layer]=np.dot(delta_output.T, attivazzione_seguente) / len(targets)
+                gradiente_pesi[layer]=np.dot(delta_output.T, attivazzione_pregressa) / len(targets)
 
 
                 #print(f"gradiente_output: {gradiente_pesi[layer]}\n\nshape gradiente output: {gradiente_pesi[layer].shape}")
@@ -185,27 +185,4 @@ class nn_optimizers:
 
 
 
-    def optimizer_Adagrad(layers, attivazioni, targets, pesi, bias, lr, e=1e-8):
-        cache_gradienti_pesi=[np.zeros_like(p) for p in pesi]
-        cache_gradienti_bias=[np.zeros_like(b) for b in bias]
-        for layer in reversed(range(len(layers))):
-            attivazione_pregressa=attivazioni[layer-1]
-            attivazione_corrente=attivazioni[layer]
-
-            if layer == len(layers):
-                derivata_errore=nn_functions.Loss_MSE_derivative(y_pred=attivazione_corrente, y_label=targets)
-            else:
-                derivata_errore=nn_functions.Loss_MSE_derivative(y_pred=attivazione_pregressa.T, y_label=targets)
-            
-            derivata_attivazione=nn_functions.activation_leaky_ReLU_derivative(Z=attivazione_corrente)
-
-            gradiente=derivata_attivazione * derivata_errore
-
-            gradiente_pesi=np.dot(gradiente.T, attivazione_pregressa) / len(targets)
-            gradiente_bias=np.sum(gradiente, axis=0) / len(targets)
-
-            cache_gradienti_pesi[layer] += (gradiente_pesi ** 2)
-            cache_gradienti_bias[layer] += (gradiente_bias ** 2)
-
-            pesi[layer] -= (lr / np.sqrt(cache_gradienti_pesi[layer] + e) * gradiente_pesi)
-            bias[layer] -= (lr / np.sqrt(cache_gradienti_bias[layer] + e) * gradiente_bias.reshape(-1))
+    f2f2
