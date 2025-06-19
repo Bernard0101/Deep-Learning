@@ -1,33 +1,29 @@
-from src.Tools import functions as nn_func
+from src.Tools import functions as nn_functions
 from src.Tools import PIML as fisica_func
 import numpy as np  # type: ignore
 
 
 class nn_Architettura:
     def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epochs:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
+        self.autodiff=Autodifferenziattore(strati=len(nn_layers))
+        self.pesi=[np.random.randn(features.shape[0], nn_layers[0])] + [np.random.randn(nn_layers[i-1], nn_layers[i]) for i in range(1, len(nn_layers))]
+        self.bias=[np.random.randn(i, 1) for i in nn_layers]
         self.features=features
         self.targets=targets
-        self.pesi=[np.random.randn(nn_layers[0], features.shape[1])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
-        self.bias=[np.random.randn(i) for i in nn_layers]
         self.inizializzazione=init_pesi
         self.nn_layers=nn_layers
-        self.ativazioni=[]
-        self.somme_pesate=[]
         self.errori=[]
         self.epoche=[]
+        self.SommaPesata=nn_functions.SommaPesata(X_inputs=features, pesi=self.pesi, bias=self.bias)
+        self.attivazione=nn_functions.attivazione()
+        self.Perdita=nn_functions.Perdita(y_pred=None, y_target=self.targets)
         self.epochs=epochs
         self.lr=learning_rate
         self.optim=ottimizzattore
         self.loss_fn=funzione_perdita
         self.activation_fn=attivazione
 
-    #implementa un layer qualsiasi della rete Neurale Multistrato
-    def nn_ArcLayer(self, in_features:np.ndarray, layer:int):
-        pesi=self.pesi[layer]
-        #print(f"pesi shape: {pesi.shape} features shape: {in_features.shape}")
-        out_features=np.dot(in_features, pesi.T) + self.bias[layer]
-        return out_features
-    
+    #implementa un layer qualsiasi della rete Neurale Multistrato 
     def initializzare_pesi(self, init_pesi:str):
         if init_pesi == "Xavier":
             for i in range(len(self.pesi)):
@@ -50,30 +46,32 @@ class nn_Architettura:
         for layer in range(len(self.nn_layers)):
             #print(f"strato: {layer}")
             if layer == 0:
-                Z=self.nn_ArcLayer(in_features=features, layer=layer)
-                self.somme_pesate.append(Z)
-                #print(f"somma pesata strato: {layer} -> {Z.shape}")
-                out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=False)
-                self.ativazioni.append(out_features)
-                #print(f"attivazioni strato: {layer} -> {out_features.shape} ")
+                Z=self.SommaPesata.func(strato=layer, derivata=False)
+                self.autodiff.memorizzare(inputs=self.SommaPesata.in_features, outputs=self.SommaPesata.out_features, operazione="somma_pesata")
+                self.attivazione.input_Z=Z
+
+                out_features=self.attivazione.func(type=self.activation_fn, derivata=False)
+                self.autodiff.memorizzare(inputs=self.attivazione.input_Z, outputs=self.attivazione.output, operazione="attivazione")
+                self.SommaPesata.in_features=out_features
+
             elif layer > 0 and layer < len(self.nn_layers): 
-                Z=self.nn_ArcLayer(in_features=out_features, layer=layer)
-                self.somme_pesate.append(Z)
-                #print(f"somma pesata strato: {layer} -> {Z.shape}")
-                out_features=nn_func.nn_functions.activation(nn_func.nn_functions, type=self.activation_fn, Z=Z, derivata=False)
-                self.ativazioni.append(out_features)
-                #print(f"attivazioni starto: {layer} -> {out_features.shape} ")
+                Z=self.SommaPesata.func(strato=layer, derivata=False)
+                self.autodiff.memorizzare(inputs=self.SommaPesata.in_features, outputs=self.SommaPesata.out_features, operazione="somma_pesata")
+                self.attivazione.input_Z=Z
+
+                out_features=self.attivazione.func(type=self.activation_fn, derivata=False)
+                self.autodiff.memorizzare(inputs=self.attivazione.input_Z, outputs=self.attivazione.output, operazione="attivazione")
+                self.SommaPesata.in_features=out_features
             else:
                 Z=self.nn_ArcLayer(in_features=out_features, layer=layer)
-                self.somme_pesate.append(out_features)
-                #print(f"somma pesata strato: {layer} -> {Z.shape}")
+                self.autodiff.memorizzare(inputs=out_features, outputs=Z, operazione="somma_pesata")
         return out_features
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
-    def Perdita(self, predizioni:np.ndarray):
+    def perdita(self, predizioni:np.ndarray):
         loss_fisica=fisica_func.Fisica.MSE_leggeCoulomb(fisica_func.Fisica, y_pred=predizioni, features=self.features)
 
-        loss_dati=nn_func.nn_functions.Loss(nn_func.nn_functions, y_pred=predizioni, y_target=self.targets,
+        loss_dati=nn_functions(nn_functions, y_pred=predizioni, y_target=self.targets,
                                   type=self.loss_fn, derivata=False)
         importanza=1e-8
         
@@ -95,10 +93,17 @@ class nn_Architettura:
         else:
             raise ValueError(f"ottimizzattore {optim} non supportato")
 
+
+
     def reset_parametri(self):
-        self.pesi=[np.random.randn(self.nn_layers[0], self.features.shape[1])] + [np.random.randn(self.nn_layers[i], self.nn_layers[i-1]) for i in range(1, len(self.nn_layers))]
+        self.SommaPesata.pesi=self.pesi
+        self.SommaPesata.bias=self.bias
+        self.pesi=[np.random.randn(self.features.shape[0], self.nn_layers[0])] + [np.random.randn(self.nn_layers[i-1], self.nn_layers[i]) for i in range(1, len(self.nn_layers))]
         self.bias=[np.random.randn(self.nn_layers[i])for i in range(len(self.nn_layers))] 
         self.errori=[]
+
+
+
 
     def regolarizzazione(self, epoca, patience, min_delta=-1e-4):
         if epoca < patience:
@@ -118,8 +123,9 @@ class nn_Architettura:
         for epoch in range(self.epochs):
             #itera su features e targets fold, un'esempio alla volta
             preds=self.Forward(features=self.features)
+            self.autodiff.show_passaggi()
             #print(f"preds: {preds}")
-            loss=self.Perdita(predizioni=preds)
+            loss=self.perdita(predizioni=preds)
             #print(f"loss: {loss}")
             self.Backward(optim=self.optim)
             self.errori.append(loss)
@@ -140,20 +146,26 @@ class nn_Architettura:
     
 
 class Autodifferenziattore:
-    def __init__(self, strati, ):
+    def __init__(self, strati):
         self.passaggi=[]    
 
-    def decodificare_operazione(self, operazione):
-        if 
-
-
-    def memorizzare(self, inputs, outputs, operazione):
-        passaggio=[
-            {"inputs" : inputs},
-            {"outputs" : outputs},
-            {"operazione" : operazione}
-            ]
+    def memorizzare(self, inputs, outputs, operazione:str):
+        passaggio= {"operazione":operazione,
+                    "inputs":inputs,
+                    "outputs":outputs,}
+            
         self.passaggi.append(passaggio)
+    
+    def show_passaggi(self):
+        for idx, passaggio in enumerate(self.passaggi):
+            for key, value in passaggio.items():
+                if key == "operazione":
+                    print(f"operazione: {value}")
+                elif key == "inputs":
+                    print(f"inputs shape: {value.shape}")
+                elif key == "outputs":
+                    print(f"outputs shape: {value.shape}")
+
 
 
 

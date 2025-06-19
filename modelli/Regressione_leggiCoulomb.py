@@ -26,6 +26,9 @@ NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 8, 8, 1], init_pesi="He
                                         features=data_features, targets=data_targets, learning_rate=3e-2, 
                                         ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 
+print(len(data_features))
+print(data_features.shape[0])
+print(NeuralNet.features.shape[0])
 
 processore_dati=processore.Metriche(dataset=data_path, modello=NeuralNet)
 

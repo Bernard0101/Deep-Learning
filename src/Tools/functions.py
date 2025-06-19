@@ -2,31 +2,40 @@ from src.Tools.PIML import Fisica
 import numpy as np # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
-class Funzioni_SommaPesata:
-    def __init__(self, X_inputs, W_pesi):
-        self.operazione="SommaPesata"
-        self.inputs=X_inputs
-        self.pesi=W_pesi
-        self.output=None
+class SommaPesata:
+    def __init__(self, X_inputs, bias, pesi):
+        self.operazione="somma_pesata"
+        self.in_features=np.array(X_inputs)
+        self.pesi=pesi
+        self.bias=bias
+        self.out_features=None
 
-    def func(self, derivata):
+    def func(self, strato, derivata):
         if not derivata:
-            return Funzioni_SommaPesata.prodotto_matriciale(X=self.inputs, W=self.pesi)
+            return self.nn_SommaPesata(layer=strato)
         else:    
-            return Funzioni_SommaPesata.derivata_prodotto_matriciale(W=self.pesi)
+            return self.nn_derivata_sommaPesata(layer=strato)
 
-    def prodotto_matriciale(X, W):
-        return np.dot(X, W)
+    def nn_SommaPesata(self, layer:int):
+        print(f"pesi type: {type(self.pesi[layer])} features type: {type(self.in_features)} bias type: {type(self.bias[layer])}")
+        print(f"pesi shape: {self.pesi[layer].T.shape} features shape: {self.in_features.shape} bias shape: {self.bias[layer].shape}")
+        pesi=self.pesi[layer]
+        bias=self.bias[layer]
+        self.out_features=np.matmul(pesi.T, self.in_features) + bias
+        print(f"out_features shape: {self.out_features.shape}")
+        return self.out_features
             
     
-    def derivata_prodotto_matriciale(W):
-        return W.T
+    def nn_derivata_sommaPesata(self, layer):
+        pesi=self.pesi[layer]
+        #print(f"pesi transposed shape: {pesi.T.shape}")
+        return pesi.T
 
 
-class Funzioni_attivazione:
-    def __init__(self, Z):
+class attivazione:
+    def __init__(self):
         self.operazione="attivazione"
-        self.input_Z=Z
+        self.input_Z=None
         self.output=None
 
     def func(self, type:str, derivata:bool):
@@ -65,6 +74,8 @@ class Funzioni_attivazione:
 
     #Leaky ReLU variant ativazione
     def activation_leaky_ReLU(self, Z, alpha=0.03):
+        print(f"ativazzione: {type(Z)}")
+        print(f"attivazione: {Z.shape}")
         self.output=np.where(Z >= 0, Z, alpha * Z)
         return self.output
 
@@ -78,7 +89,7 @@ class Funzioni_attivazione:
         return self.output
 
     def activation_Sigomid_derivative(self, Z):
-        s=Funzioni_attivazione.activation_Sigmoid(Z)
+        s=attivazione.activation_Sigmoid(Z)
         self.output= s * (1-s)
         return self.output
 
@@ -88,10 +99,10 @@ class Funzioni_attivazione:
         return self.output
 
     def activation_tanh_derivative(self, Z):
-        return 1-(Funzioni_attivazione.activation_tanh(Z) ** 2)
+        return 1-(attivazione.activation_tanh(Z) ** 2)
 
 
-class Funzioni_Perdita:
+class Perdita:
     def __init__(self, y_pred, y_target):
         self.operazione="Perdita"
         self.input_pred=y_pred
@@ -123,40 +134,43 @@ class Funzioni_Perdita:
             raise ValueError(f"funzione di costo {type}, non supportata")
 
  #mse Loss
-    def Loss_MSE(y_pred, y_label):
-        return np.mean((y_pred-y_label)**2)
+    def Loss_MSE(self, y_pred, y_label):
+        self.output=np.mean((y_pred-y_label)**2)
+        return self.output
         
-    def Loss_MSE_derivative(y_pred, y_label):
+    def Loss_MSE_derivative(self, y_pred, y_label):
         n=len(y_label)
         y_label=y_label.reshape(-1, 1)
-        MSE_derivata=-2 * (y_pred-y_label) / n
-        return MSE_derivata
+        self.output=-2 * (y_pred-y_label) / n
+        return self.output
 
     #MAE Loss
-    def Loss_MAE(y_pred, y_label):
-        return np.abs(np.mean(y_pred-y_label))
+    def Loss_MAE(self, y_pred, y_label):
+        self.output=np.abs(np.mean(y_pred-y_label))
+        return self.output
 
-    def Loss_MAE_derivative(y_pred, y_label):
+    def Loss_MAE_derivative(self, y_pred, y_label):
         n = len(y_label)
         y_label=y_label.reshape(-1, 1)
-        return np.where(y_pred < y_label, -1/n, 1/n)    
+        self.output=np.where(y_pred < y_label, -1/n, 1/n)    
+        return self.output
 
     #Binary Cross Entropy Loss
-    def Loss_BCE(y_pred, y_label):
+    def Loss_BCE(self, y_pred, y_label):
         y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
-        loss = -np.mean(y_label * np.log(y_pred) + (1 - y_label) * np.log(1 - y_pred))
-        return loss
+        self.output=-np.mean(y_label * np.log(y_pred) + (1 - y_label) * np.log(1 - y_pred))
+        return self.output
 
-    def Loss_BCE_derivative(y_pred, y_label):
+    def Loss_BCE_derivative(self, y_pred, y_label):
         y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
-        derivative = -(y_label / y_pred) + (1 - y_label) / (1 - y_pred)
-        return derivative
+        self.output=-(y_label / y_pred) + (1 - y_label) / (1 - y_pred)
+        return self.output
     
-    def Loss_CCE(y_pred, y_label):
+    def Loss_CCE(self, y_pred, y_label):
         eps = 1e-15  # evita log(0)
         y_pred = np.clip(y_pred, eps, 1 - eps)
-        loss=-np.sum(y_label * np.log(y_pred))
-        return loss
+        self.output=-np.sum(y_label * np.log(y_pred))
+        return self.output
 
   
 
