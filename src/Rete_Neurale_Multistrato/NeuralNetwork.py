@@ -41,13 +41,13 @@ class nn_Architettura:
 
 
     #implementa la forward propagation d'accordo con il tipo di ativazione e initializzazione dei pesi
-    def Forward(self):
+    def Forward(self, inputs):
         predizione=None
         for layer in range(len(self.nn_layers)):
             print(f"strato: {layer}")
             if layer == 0:
-                Z=self.SommaPesata.func(inputs=self.features, strato=layer, derivata=False)
-                self.autodiff.memorizzare(strato=layer ,inputs=self.features, outputs=Z, operazione="somma_pesata")
+                Z=self.SommaPesata.func(inputs=inputs, strato=layer, derivata=False)
+                self.autodiff.memorizzare(strato=layer, inputs=inputs, outputs=Z, operazione="somma_pesata")
                 out_features=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=False)
                 self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=out_features, operazione="attivazione")
 
@@ -111,7 +111,7 @@ class nn_Architettura:
         self.reset_parametri()
         self.initializzare_pesi(init_pesi=self.inizializzazione)
         for epoch in range(self.epochs):
-            preds=self.Forward()
+            preds=self.Forward(inputs=self.features)
             print(f"pred: {preds.shape}")
             loss=self.perdita(predizioni=preds)
             self.autodiff.show_passaggi()
@@ -175,24 +175,36 @@ class Autodifferenziattore:
                 
 
     def retropropagazione(self, predizioni, targets):
-        delta_gradiente=self.Perdita.func(y_pred=predizioni, type=self.loss_fn, y_target=targets, derivata=True)
+        calculate_grad=len(self.passaggi)-3
         for passaggio_idx in reversed(range(len(self.passaggi))):
-            print(f"passaggi: {passaggio_idx}")
             strato=self.passaggi[passaggio_idx]["strato"]
             print(f"strato: {strato}")
+            print(f"passaggio: {passaggio_idx}")
 
-            if self.passaggi[passaggio_idx]["operazione"] == "attivazione":
-                Z=self.passaggi[passaggio_idx]["inputs"]
-                gradiente_attivazione=self.attivazione.func(inputs=Z, type=self.attivazione.type, derivata=True)
-                print(f"delta gradiente {delta_gradiente.shape} gradiente attivazione: {gradiente_attivazione.shape}")
-                delta_gradiente=delta_gradiente * gradiente_attivazione
+
+            if self.passaggi[passaggio_idx]["operazione"] == "Perdita":
+                gradiente_loss=self.Perdita.func(y_pred=predizioni, y_target=targets, type=self.loss_fn, derivata=True)
+
+            elif self.passaggi[passaggio_idx]["operazione"] == "attivazione":
+                attivazione_precedenti=self.passaggi[passaggio_idx]["outputs"]
+                Z=self.passaggi[passaggio_idx]["inputs"] 
+                gradiente_attivazione=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=True)
+                
 
             elif self.passaggi[passaggio_idx]["operazione"] == "somma_pesata":
-                inputs_precedenti=self.passaggi[passaggio_idx]["inputs"]
+                pesi_precedenti=self.passaggi[passaggio_idx]["inputs"]
+                strato_pesi=self.passaggi[passaggio_idx]["strato"]
+                gradiente_sommaPesata=self.SommaPesata.func(inputs=pesi_precedenti, strato=strato_pesi, derivata=True)
 
-                self.gradiente_pesi[strato]=np.dot(delta_gradiente.T, inputs_precedenti) / targets.shape[0]
-                self.gradiente_bias[strato]=np.sum(delta_gradiente, axis=0, keepdims=True) / targets.shape[0]
+        
+            if strato == self.strati and passaggio_idx == (len(self.passaggi)-3):
+                print(f"grad_loss: {gradiente_loss.shape} grad_attivazione: {gradiente_attivazione.shape} grad_sommaPesata: {gradiente_sommaPesata.shape}")
+                gradiente_delta=np.dot((gradiente_loss * gradiente_attivazione), gradiente_sommaPesata.T)
+                print(f"gradiente delta: {gradiente_delta.shape}")
+                calculate_grad-=2
 
-            if strato < self.strati:
-                print(f"delta gradiente: {delta_gradiente.shape} pesi strato: {self.pesi[strato].shape}")
-                delta_gradiente = np.dot(delta_gradiente, self.pesi[strato])
+           
+
+                
+
+

@@ -27,7 +27,7 @@ class SommaPesata:
     def nn_derivata_sommaPesata(self, layer):
         print(f"pesi shape: {self.pesi[layer].shape}")
         pesi=self.pesi[layer]
-        return pesi
+        return pesi.T
 
 
 class attivazione:
