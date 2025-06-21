@@ -22,7 +22,7 @@ K_folds=5
 
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 8, 8, 1], init_pesi="He", epochs=1000,
+NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", epochs=1000,
                                         features=data_features, targets=data_targets, learning_rate=3e-2, 
                                         ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 

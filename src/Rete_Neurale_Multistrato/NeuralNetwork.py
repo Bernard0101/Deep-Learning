@@ -17,6 +17,7 @@ class nn_Architettura:
         self.SommaPesata=nn_functions.SommaPesata(pesi=self.pesi, bias=self.bias)
         self.attivazione=nn_functions.attivazione(type=attivazione)
         self.Perdita=nn_functions.Perdita(type=funzione_perdita)
+        self.optimizer=nn_functions.optimizers(alg_optim=ottimizzattore, pesi=self.pesi, bias=self.bias, lr=learning_rate, grad_pesi=self.autodiff.gradiente_pesi, grad_bias=self.autodiff.gradiente_bias)
         self.epochs=epochs
         self.lr=learning_rate
         self.optim=ottimizzattore
@@ -72,26 +73,16 @@ class nn_Architettura:
         
     
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
-    def Backward(self, optim:str):
-
-        if optim == "SGD":
-            nn_func.nn_optimizers.optimizer_SGD(layers=self.nn_layers, attivazzioni=self.ativazioni, somme_pesate=self.somme_pesate,
-                                                targets=self.targets, features=self.features, pesi=self.pesi, bias=self.bias, 
-                                                lr=self.lr, activation_fn=self.activation_fn, loss_fn=self.loss_fn, legge_fisica=None)
-        elif optim == "Adagrad":
-            nn_func.nn_optimizers.optimizer_Adagrad(layers=self.nn_layers, attivazioni=self.ativazioni, some_pesate=self.somme_pesate,
-                                                targets=self.targets, pesi=self.pesi, bias=self.bias,
-                                                lr=self.lr)
-        else:
-            raise ValueError(f"ottimizzattore {optim} non supportato")
-
-
+    def Backward(self):
+        self.optimizer.optimizer_SGD()
+      
 
     def reset_parametri(self):
         self.pesi=[np.random.randn(self.nn_layers[0], self.features.shape[1])] + [np.random.randn(self.nn_layers[i], self.nn_layers[i-1]) for i in range(1, len(self.nn_layers))]
         self.bias=[np.random.randn(i) for i in self.nn_layers]
         self.SommaPesata.pesi=self.pesi
         self.SommaPesata.bias=self.bias
+        self.autodiff.passaggi=[]
         self.errori=[]
 
 
@@ -116,7 +107,7 @@ class nn_Architettura:
             loss=self.perdita(predizioni=preds)
             self.autodiff.show_passaggi()
             self.autodiff.retropropagazione(predizioni=preds, targets=self.targets)
-            self.Backward(optim=self.optim)
+            self.Backward()
             self.errori.append(loss)
             print(f"epoca: {epoch}| perdita: {loss}")
             if(self.regolarizzazione(epoca=epoch, patience=15)):
@@ -186,23 +177,26 @@ class Autodifferenziattore:
                 gradiente_loss=self.Perdita.func(y_pred=predizioni, y_target=targets, type=self.loss_fn, derivata=True)
 
             elif self.passaggi[passaggio_idx]["operazione"] == "attivazione":
-                attivazione_precedenti=self.passaggi[passaggio_idx]["outputs"]
                 Z=self.passaggi[passaggio_idx]["inputs"] 
+                attivazioni_precedenti=self.passaggi[passaggio_idx]["outputs"]
                 gradiente_attivazione=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=True)
-                
 
-            elif self.passaggi[passaggio_idx]["operazione"] == "somma_pesata":
-                pesi_precedenti=self.passaggi[passaggio_idx]["inputs"]
-                strato_pesi=self.passaggi[passaggio_idx]["strato"]
-                gradiente_sommaPesata=self.SommaPesata.func(inputs=pesi_precedenti, strato=strato_pesi, derivata=True)
-
-        
             if strato == self.strati and passaggio_idx == (len(self.passaggi)-3):
-                print(f"grad_loss: {gradiente_loss.shape} grad_attivazione: {gradiente_attivazione.shape} grad_sommaPesata: {gradiente_sommaPesata.shape}")
-                gradiente_delta=np.dot((gradiente_loss * gradiente_attivazione), gradiente_sommaPesata.T)
+                print(f"grad_loss: {gradiente_loss.shape} grad_attivazione: {gradiente_attivazione.shape}")
+                gradiente_delta=gradiente_loss * gradiente_attivazione
                 print(f"gradiente delta: {gradiente_delta.shape}")
+                self.gradiente_pesi[strato]=np.dot(gradiente_delta, attivazioni_precedenti.T)
+                self.gradiente_bias[strato]=None
                 calculate_grad-=2
 
+            elif strato < self.strati and passaggio_idx == calculate_grad and passaggio_idx != 0: 
+                print(f"gradiente delta: {gradiente_delta.shape} pesi strato sucessore: {self.pesi[strato+1].shape} gradiente attivazione: {gradiente_attivazione.shape}")
+                gradiente_delta=np.dot(gradiente_delta, self.pesi[strato+1]) * gradiente_attivazione
+                print(f"gradiente delta: {gradiente_delta.shape}")
+                self.gradiente_pesi[strato]=np.dot(gradiente_delta, attivazioni_precedenti.T)
+                calculate_grad-=2
+                
+                
            
 
                 
