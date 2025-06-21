@@ -5,18 +5,18 @@ import numpy as np  # type: ignore
 
 class nn_Architettura:
     def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epochs:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
-        self.autodiff=Autodifferenziattore(strati=len(nn_layers))
-        self.pesi=[np.random.randn(features.shape[0], nn_layers[0])] + [np.random.randn(nn_layers[i-1], nn_layers[i]) for i in range(1, len(nn_layers))]
+        self.pesi=[np.random.randn(nn_layers[0], features.shape[1])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
         self.bias=[np.random.randn(i, 1) for i in nn_layers]
+        self.autodiff=Autodifferenziattore(strati=(len(nn_layers)-1), pesi=self.pesi, bias=self.bias, activation_fn=attivazione, loss_fn=funzione_perdita)
         self.features=features
         self.targets=targets
         self.inizializzazione=init_pesi
         self.nn_layers=nn_layers
         self.errori=[]
         self.epoche=[]
-        self.SommaPesata=nn_functions.SommaPesata(X_inputs=features, pesi=self.pesi, bias=self.bias)
-        self.attivazione=nn_functions.attivazione()
-        self.Perdita=nn_functions.Perdita(y_pred=None, y_target=self.targets)
+        self.SommaPesata=nn_functions.SommaPesata(pesi=self.pesi, bias=self.bias)
+        self.attivazione=nn_functions.attivazione(type=attivazione)
+        self.Perdita=nn_functions.Perdita(type=funzione_perdita)
         self.epochs=epochs
         self.lr=learning_rate
         self.optim=ottimizzattore
@@ -27,56 +27,48 @@ class nn_Architettura:
     def initializzare_pesi(self, init_pesi:str):
         if init_pesi == "Xavier":
             for i in range(len(self.pesi)):
-                fan_in = self.pesi[i].shape[1]
-                fan_out = self.pesi[i].shape[0]
-                limite = np.sqrt(6 / (fan_in + fan_out))
-                self.pesi[i] = np.random.uniform(-limite, limite, size=self.pesi[i].shape)
+                fan_in=self.pesi[i].shape[1]
+                fan_out=self.pesi[i].shape[0]
+                limite=np.sqrt(6 / (fan_in + fan_out))
+                self.pesi[i]=np.random.uniform(-limite, limite, size=self.pesi[i].shape)
 
         elif init_pesi == "He":
             for i in range(len(self.pesi)):
-                fan_in = self.pesi[i].shape[1]
-                self.pesi[i] = np.random.randn(*self.pesi[i].shape) * np.sqrt(2. / fan_in)
+                fan_in=self.pesi[i].shape[1]
+                self.pesi[i]=np.random.randn(*self.pesi[i].shape) * np.sqrt(2. / fan_in)
         else:
             raise ValueError(f"funzione di inizializzazione dei pesi: {init_pesi} non supportata")
 
 
-
     #implementa la forward propagation d'accordo con il tipo di ativazione e initializzazione dei pesi
-    def Forward(self, features:np.ndarray):
+    def Forward(self):
+        predizione=None
         for layer in range(len(self.nn_layers)):
-            #print(f"strato: {layer}")
+            print(f"strato: {layer}")
             if layer == 0:
-                Z=self.SommaPesata.func(strato=layer, derivata=False)
-                self.autodiff.memorizzare(inputs=self.SommaPesata.in_features, outputs=self.SommaPesata.out_features, operazione="somma_pesata")
-                self.attivazione.input_Z=Z
+                Z=self.SommaPesata.func(inputs=self.features, strato=layer, derivata=False)
+                self.autodiff.memorizzare(strato=layer ,inputs=self.features, outputs=Z, operazione="somma_pesata")
+                out_features=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=False)
+                self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=out_features, operazione="attivazione")
 
-                out_features=self.attivazione.func(type=self.activation_fn, derivata=False)
-                self.autodiff.memorizzare(inputs=self.attivazione.input_Z, outputs=self.attivazione.output, operazione="attivazione")
-                self.SommaPesata.in_features=out_features
-
-            elif layer > 0 and layer < len(self.nn_layers): 
-                Z=self.SommaPesata.func(strato=layer, derivata=False)
-                self.autodiff.memorizzare(inputs=self.SommaPesata.in_features, outputs=self.SommaPesata.out_features, operazione="somma_pesata")
-                self.attivazione.input_Z=Z
-
-                out_features=self.attivazione.func(type=self.activation_fn, derivata=False)
-                self.autodiff.memorizzare(inputs=self.attivazione.input_Z, outputs=self.attivazione.output, operazione="attivazione")
-                self.SommaPesata.in_features=out_features
+            elif layer > 0 and layer != len(self.nn_layers)-1: 
+                Z=self.SommaPesata.func(inputs=out_features, strato=layer, derivata=False)
+                self.autodiff.memorizzare(strato=layer, inputs=out_features, outputs=Z, operazione="somma_pesata")
+                out_features=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=False)
+                self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=out_features, operazione="attivazione")
             else:
-                Z=self.nn_ArcLayer(in_features=out_features, layer=layer)
-                self.autodiff.memorizzare(inputs=out_features, outputs=Z, operazione="somma_pesata")
-        return out_features
+                Z=self.SommaPesata.func(inputs=out_features, strato=layer, derivata=False)
+                self.autodiff.memorizzare(strato=layer, inputs=out_features, outputs=Z, operazione="somma_pesata")
+                predizione=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=False)
+                self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=predizione, operazione="attivazione")
+
+        return predizione
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
     def perdita(self, predizioni:np.ndarray):
-        loss_fisica=fisica_func.Fisica.MSE_leggeCoulomb(fisica_func.Fisica, y_pred=predizioni, features=self.features)
-
-        loss_dati=nn_functions(nn_functions, y_pred=predizioni, y_target=self.targets,
-                                  type=self.loss_fn, derivata=False)
-        importanza=1e-8
-        
-        loss_complessiva=loss_dati + loss_fisica * importanza
-        return loss_complessiva
+        loss=self.Perdita.func(y_pred=predizioni, y_target=self.targets, type=self.loss_fn, derivata=False)
+        self.autodiff.memorizzare(strato=(len(self.nn_layers)-1), inputs=[predizioni, self.targets], outputs=loss, operazione="Perdita")
+        return loss
         
     
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
@@ -96,13 +88,11 @@ class nn_Architettura:
 
 
     def reset_parametri(self):
+        self.pesi=[np.random.randn(self.nn_layers[0], self.features.shape[1])] + [np.random.randn(self.nn_layers[i], self.nn_layers[i-1]) for i in range(1, len(self.nn_layers))]
+        self.bias=[np.random.randn(i) for i in self.nn_layers]
         self.SommaPesata.pesi=self.pesi
         self.SommaPesata.bias=self.bias
-        self.pesi=[np.random.randn(self.features.shape[0], self.nn_layers[0])] + [np.random.randn(self.nn_layers[i-1], self.nn_layers[i]) for i in range(1, len(self.nn_layers))]
-        self.bias=[np.random.randn(self.nn_layers[i])for i in range(len(self.nn_layers))] 
         self.errori=[]
-
-
 
 
     def regolarizzazione(self, epoca, patience, min_delta=-1e-4):
@@ -121,12 +111,11 @@ class nn_Architettura:
         self.reset_parametri()
         self.initializzare_pesi(init_pesi=self.inizializzazione)
         for epoch in range(self.epochs):
-            #itera su features e targets fold, un'esempio alla volta
-            preds=self.Forward(features=self.features)
-            self.autodiff.show_passaggi()
-            #print(f"preds: {preds}")
+            preds=self.Forward()
+            print(f"pred: {preds.shape}")
             loss=self.perdita(predizioni=preds)
-            #print(f"loss: {loss}")
+            self.autodiff.show_passaggi()
+            self.autodiff.retropropagazione(predizioni=preds, targets=self.targets)
             self.Backward(optim=self.optim)
             self.errori.append(loss)
             print(f"epoca: {epoch}| perdita: {loss}")
@@ -146,31 +135,64 @@ class nn_Architettura:
     
 
 class Autodifferenziattore:
-    def __init__(self, strati):
-        self.passaggi=[]    
+    def __init__(self, strati, activation_fn, loss_fn, pesi, bias):
+        self.SommaPesata=nn_functions.SommaPesata(pesi=pesi, bias=bias)
+        self.attivazione=nn_functions.attivazione(type=activation_fn)
+        self.Perdita=nn_functions.Perdita(type=loss_fn)
+        self.pesi=pesi
+        self.bias=bias
+        self.gradiente_pesi=[np.ones_like(p)for p in pesi]
+        self.gradiente_bias=[np.ones_like(b)for b in bias]
+        self.passaggi=[]
+        self.strati=strati
+        self.activation_fn=activation_fn
+        self.loss_fn=loss_fn
+       
 
-    def memorizzare(self, inputs, outputs, operazione:str):
-        passaggio= {"operazione":operazione,
+
+    def memorizzare(self, strato, inputs, outputs, operazione:str):
+        passaggio= {"strato":strato,
+                    "operazione":operazione,
                     "inputs":inputs,
-                    "outputs":outputs,}
-            
+                    "outputs":outputs}
         self.passaggi.append(passaggio)
     
+
     def show_passaggi(self):
-        for idx, passaggio in enumerate(self.passaggi):
+        for passaggio in self.passaggi:
             for key, value in passaggio.items():
-                if key == "operazione":
+                if key == "strato": 
+                    print(f"strato: {value}")
+                    continue
+                elif key == "operazione":
                     print(f"operazione: {value}")
-                elif key == "inputs":
+                    continue
+                elif key == "inputs" and not isinstance(value, list):
                     print(f"inputs shape: {value.shape}")
-                elif key == "outputs":
+                    continue
+                elif key == "outputs" and not isinstance(value, list):
                     print(f"outputs shape: {value.shape}")
+                
 
+    def retropropagazione(self, predizioni, targets):
+        delta_gradiente=self.Perdita.func(y_pred=predizioni, type=self.loss_fn, y_target=targets, derivata=True)
+        for passaggio_idx in reversed(range(len(self.passaggi))):
+            print(f"passaggi: {passaggio_idx}")
+            strato=self.passaggi[passaggio_idx]["strato"]
+            print(f"strato: {strato}")
 
+            if self.passaggi[passaggio_idx]["operazione"] == "attivazione":
+                Z=self.passaggi[passaggio_idx]["inputs"]
+                gradiente_attivazione=self.attivazione.func(inputs=Z, type=self.attivazione.type, derivata=True)
+                print(f"delta gradiente {delta_gradiente.shape} gradiente attivazione: {gradiente_attivazione.shape}")
+                delta_gradiente=delta_gradiente * gradiente_attivazione
 
+            elif self.passaggi[passaggio_idx]["operazione"] == "somma_pesata":
+                inputs_precedenti=self.passaggi[passaggio_idx]["inputs"]
 
+                self.gradiente_pesi[strato]=np.dot(delta_gradiente.T, inputs_precedenti) / targets.shape[0]
+                self.gradiente_bias[strato]=np.sum(delta_gradiente, axis=0, keepdims=True) / targets.shape[0]
 
-
-
-
-
+            if strato < self.strati:
+                print(f"delta gradiente: {delta_gradiente.shape} pesi strato: {self.pesi[strato].shape}")
+                delta_gradiente = np.dot(delta_gradiente, self.pesi[strato])

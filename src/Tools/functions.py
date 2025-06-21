@@ -3,131 +3,125 @@ import numpy as np # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
 class SommaPesata:
-    def __init__(self, X_inputs, bias, pesi):
+    def __init__(self, bias, pesi):
         self.operazione="somma_pesata"
-        self.in_features=np.array(X_inputs)
         self.pesi=pesi
         self.bias=bias
-        self.out_features=None
 
-    def func(self, strato, derivata):
+    def func(self, inputs, strato, derivata):
         if not derivata:
-            return self.nn_SommaPesata(layer=strato)
+            return self.nn_SommaPesata(layer=strato, inputs=inputs)
         else:    
             return self.nn_derivata_sommaPesata(layer=strato)
 
-    def nn_SommaPesata(self, layer:int):
-        print(f"pesi type: {type(self.pesi[layer])} features type: {type(self.in_features)} bias type: {type(self.bias[layer])}")
-        print(f"pesi shape: {self.pesi[layer].T.shape} features shape: {self.in_features.shape} bias shape: {self.bias[layer].shape}")
+    def nn_SommaPesata(self, inputs, layer:int):
+        print(f"features type: {type(inputs.shape)} pesi type: {type(self.pesi[layer])} bias type: {type(self.bias[layer])}")
+        print(f"features shape: {inputs.shape} pesi shape: {self.pesi[layer].T.shape} bias shape: {self.bias[layer].shape}")
         pesi=self.pesi[layer]
         bias=self.bias[layer]
-        self.out_features=np.matmul(pesi.T, self.in_features) + bias
-        print(f"out_features shape: {self.out_features.shape}")
-        return self.out_features
+        out_features=np.matmul(inputs, pesi.T) + bias
+        print(f"out_features shape: {out_features.shape}")
+        return out_features
             
     
     def nn_derivata_sommaPesata(self, layer):
+        print(f"pesi shape: {self.pesi[layer].shape}")
         pesi=self.pesi[layer]
-        #print(f"pesi transposed shape: {pesi.T.shape}")
-        return pesi.T
+        return pesi
 
 
 class attivazione:
-    def __init__(self):
+    def __init__(self, type):
         self.operazione="attivazione"
-        self.input_Z=None
-        self.output=None
+        self.type=type
 
-    def func(self, type:str, derivata:bool):
+    def func(self, inputs, type:str, derivata:bool):
         if type == "ReLU":
             if (not derivata):
-                return self.activation_ReLU(Z=self.input_Z)
+                return self.activation_ReLU(Z=inputs)
             else:
-                return self.activation_ReLU_derivative(Z=self.input_Z)
+                return self.activation_ReLU_derivative(Z=inputs)
         elif type == "leaky_ReLU":
             if(not derivata):
-                return self.activation_leaky_ReLU(Z=self.input_Z)
+                return self.activation_leaky_ReLU(Z=inputs)
             else:
-                return self.activation_leaky_ReLU_derivative(Z=self.input_Z)
+                return self.activation_leaky_ReLU_derivative(Z=inputs)
         elif type == "Sigmoid":
             if (not derivata):
-                return self.activation_Sigmoid(Z=self.input_Z)
+                return self.activation_Sigmoid(Z=inputs)
             else: 
-                return self.activation_Sigomid_derivative(Z=self.input_Z)
+                return self.activation_Sigomid_derivative(Z=inputs)
         elif type == "Tanh":
             if (not derivata):
-                return self.activation_tanh(Z=self.input_Z)
+                return self.activation_tanh(Z=inputs)
             else: 
-                return self.activation_tanh_derivative(Z=self.input_Z)
+                return self.activation_tanh_derivative(Z=inputs)
         else:
             raise ValueError(f"la funzione {type} non e supportata")
 
     #ReLU function ativazione
     def activation_ReLU(self, Z):
-        result=np.maxpassimum(0, Z)
-        self.output=result
+        result=np.maximum(0, Z)
         return result
 
     def activation_ReLU_derivative(self, Z):
-        self.output=np.where(Z > 0, 1, 0)
-        return self.output
+        output=np.where(Z > 0, 1, 0)
+        return output
 
     #Leaky ReLU variant ativazione
     def activation_leaky_ReLU(self, Z, alpha=0.03):
-        print(f"ativazzione: {type(Z)}")
-        print(f"attivazione: {Z.shape}")
-        self.output=np.where(Z >= 0, Z, alpha * Z)
-        return self.output
+        print(f"attivazione shape: {Z.shape}")
+        output=np.where(Z >= 0, Z, alpha * Z)
+        return output
 
     def activation_leaky_ReLU_derivative(self, Z, alpha=0.03):
-        self.output=np.where(Z > 0, 1, alpha)
-        return self.output
+        print(f"attivazione shape: {Z.shape}")
+        output=np.where(Z > 0, 1, alpha)
+        return output
 
     #Sigmoid function ativazione
     def activation_Sigmoid(self, Z):
-        self.output= 1 / (1 + np.exp(-Z))
-        return self.output
+        output= 1 / (1 + np.exp(-Z))
+        return output
 
     def activation_Sigomid_derivative(self, Z):
-        s=attivazione.activation_Sigmoid(Z)
-        self.output= s * (1-s)
-        return self.output
+        s=self.activation_Sigmoid(Z)
+        output= s * (1-s)
+        return output
 
     #Tanh function ativazione
     def activation_tanh(self, Z):
-        self.output=np.sinh(Z)/np.cosh(Z)
-        return self.output
+        output=np.sinh(Z)/np.cosh(Z)
+        return output
 
     def activation_tanh_derivative(self, Z):
-        return 1-(attivazione.activation_tanh(Z) ** 2)
+        return 1-(self.activation_tanh(Z) ** 2)
 
 
 class Perdita:
-    def __init__(self, y_pred, y_target):
+    def __init__(self, type):
         self.operazione="Perdita"
-        self.input_pred=y_pred
-        self.input_target=y_target
-        self.output=None
+        self.type=type
         
-    def func(self, y_pred, y_target, type, derivata):
+    def func(self, y_pred, y_target, derivata, type=type):
         if type == "MAE":
             if (not derivata):
-                return self.Loss_MAE(y_label=self.input_target, y_pred=self.input_pred)
+                return self.Loss_MAE(y_label=y_target, y_pred=y_pred)
             else:
-                return self.Loss_MAE_derivative(y_label=self.input_target, y_pred=self.input_pred)
+                return self.Loss_MAE_derivative(y_label=y_target, y_pred=y_pred)
         elif type == "MSE":
             if (not derivata):
-                return self.Loss_MSE(y_label=self.input_target, y_pred=self.input_pred)
+                return self.Loss_MSE(y_label=y_target, y_pred=y_pred)
             else: 
-                return self.Loss_MSE_derivative(y_label=self.input_target, y_pred=self.input_pred)
+                return self.Loss_MSE_derivative(y_label=y_target, y_pred=y_pred)
         elif type == "BCE":
             if (not derivata):
-                return self.Loss_BCE(y_label=self.input_target, y_pred=self.input_pred)
+                return self.Loss_BCE(y_label=y_target, y_pred=y_pred)
             else:
-                return self.Loss_BCE_derivative(y_label=self.input_target, y_pred=self.input_pred)
+                return self.Loss_BCE_derivative(y_label=y_target, y_pred=y_pred)
         elif type == "CCE":
             if(not derivata):
-                return self.Loss_CCE(y_label=self.input_target, y_pred=self.input_pred)
+                return self.Loss_CCE(y_label=y_target, y_pred=y_pred)
             else:
                 pass
         else:
@@ -135,42 +129,45 @@ class Perdita:
 
  #mse Loss
     def Loss_MSE(self, y_pred, y_label):
-        self.output=np.mean((y_pred-y_label)**2)
-        return self.output
+        print(f"preds: {y_pred.shape} targets: {y_label.shape}")
+        output=np.mean((y_pred-y_label)**2)
+        return output
         
     def Loss_MSE_derivative(self, y_pred, y_label):
         n=len(y_label)
         y_label=y_label.reshape(-1, 1)
-        self.output=-2 * (y_pred-y_label) / n
-        return self.output
+        print(f"y_pred: {y_pred.shape} y_label: {y_label.shape}")
+        output=-2 * (y_pred-y_label) / n
+        print(f"output: {output.shape}")
+        return output
 
     #MAE Loss
     def Loss_MAE(self, y_pred, y_label):
-        self.output=np.abs(np.mean(y_pred-y_label))
-        return self.output
+        output=np.abs(np.mean(y_pred-y_label))
+        return output
 
     def Loss_MAE_derivative(self, y_pred, y_label):
         n = len(y_label)
         y_label=y_label.reshape(-1, 1)
-        self.output=np.where(y_pred < y_label, -1/n, 1/n)    
-        return self.output
+        output=np.where(y_pred < y_label, -1/n, 1/n)    
+        return output
 
     #Binary Cross Entropy Loss
     def Loss_BCE(self, y_pred, y_label):
         y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
-        self.output=-np.mean(y_label * np.log(y_pred) + (1 - y_label) * np.log(1 - y_pred))
-        return self.output
+        output=-np.mean(y_label * np.log(y_pred) + (1 - y_label) * np.log(1 - y_pred))
+        return output
 
     def Loss_BCE_derivative(self, y_pred, y_label):
         y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
-        self.output=-(y_label / y_pred) + (1 - y_label) / (1 - y_pred)
-        return self.output
+        output=-(y_label / y_pred) + (1 - y_label) / (1 - y_pred)
+        return output
     
     def Loss_CCE(self, y_pred, y_label):
         eps = 1e-15  # evita log(0)
         y_pred = np.clip(y_pred, eps, 1 - eps)
-        self.output=-np.sum(y_label * np.log(y_pred))
-        return self.output
+        output=-np.sum(y_label * np.log(y_pred))
+        return output
 
   
 
