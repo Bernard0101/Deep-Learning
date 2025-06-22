@@ -15,17 +15,17 @@ class SommaPesata:
             return self.nn_derivata_sommaPesata(layer=strato)
 
     def nn_SommaPesata(self, inputs, layer:int):
-        print(f"features type: {type(inputs.shape)} pesi type: {type(self.pesi[layer])} bias type: {type(self.bias[layer])}")
-        print(f"features shape: {inputs.shape} pesi shape: {self.pesi[layer].T.shape} bias shape: {self.bias[layer].shape}")
+        #print(f"features type: {type(inputs.shape)} pesi type: {type(self.pesi[layer])} bias type: {type(self.bias[layer])}")
+        #print(f"features shape: {inputs.shape} pesi shape: {self.pesi[layer].T.shape} bias shape: {self.bias[layer].shape}")
         pesi=self.pesi[layer]
         bias=self.bias[layer]
         out_features=np.matmul(inputs, pesi.T) + bias
-        print(f"out_features shape: {out_features.shape}")
+        #print(f"out_features shape: {out_features.shape}")
         return out_features
             
     
     def nn_derivata_sommaPesata(self, layer):
-        print(f"pesi shape: {self.pesi[layer].shape}")
+        #print(f"pesi shape: {self.pesi[layer].shape}")
         pesi=self.pesi[layer]
         return pesi.T
 
@@ -70,12 +70,12 @@ class attivazione:
 
     #Leaky ReLU variant ativazione
     def activation_leaky_ReLU(self, Z, alpha=0.03):
-        print(f"attivazione shape: {Z.shape}")
+        #print(f"attivazione shape: {Z.shape}")
         output=np.where(Z >= 0, Z, alpha * Z)
         return output
 
     def activation_leaky_ReLU_derivative(self, Z, alpha=0.03):
-        print(f"attivazione shape: {Z.shape}")
+        #print(f"attivazione shape: {Z.shape}")
         output=np.where(Z > 0, 1, alpha)
         return output
 
@@ -129,16 +129,16 @@ class Perdita:
 
  #mse Loss
     def Loss_MSE(self, y_pred, y_label):
-        print(f"preds: {y_pred.shape} targets: {y_label.shape}")
+        #print(f"preds: {y_pred.shape} targets: {y_label.shape}")
         output=np.mean((y_pred-y_label)**2)
         return output
         
     def Loss_MSE_derivative(self, y_pred, y_label):
         n=len(y_label)
         y_label=y_label.reshape(-1, 1)
-        print(f"y_pred: {y_pred.shape} y_label: {y_label.shape}")
+        #print(f"y_pred: {y_pred.shape} y_label: {y_label.shape}")
         output=-2 * (y_pred-y_label) / n
-        print(f"output: {output.shape}")
+        #print(f"output: {output.shape}")
         return output
 
     #MAE Loss
@@ -180,20 +180,13 @@ class optimizers:
         self.gradiente_bias=grad_bias
         self.learning_rate=lr
 
-    def func():
-        pass
+    def func(self):
+        if self.optim == "SGD":
+            self.optimizer_SGD()
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
     def optimizer_SGD(self):
-        for p in self.gradiente_pesi:
-            p *= self.learning_rate
-        for b in self.gradiente_bias:
-            b *= self.learning_rate        
-        self.pesi -= self.gradiente_pesi
-        self.bias -= self.gradiente_bias
-
-       
-
+        pass
 
 
 

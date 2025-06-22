@@ -3,7 +3,7 @@ import pandas as pd # type: ignore
 import numpy as np # type: ignore
 
 
-from src.Rete_Neurale_Multistrato import NeuralNetwork
+from src.Rete_Neurale_Multistrato import NeuralNetwork as nn
 from src.Tools import processore 
 from src.Tools import functions as nn_func
 from src.Tools import PIML
@@ -22,7 +22,7 @@ K_folds=5
 
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=NeuralNetwork.nn_Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", epochs=1000,
+NeuralNet=nn.Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", epochs=1000,
                                         features=data_features, targets=data_targets, learning_rate=3e-2, 
                                         ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 
