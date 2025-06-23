@@ -1,4 +1,3 @@
-from src.Tools.PIML import Fisica
 import numpy as np # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
@@ -147,24 +146,24 @@ class Perdita:
         return output
 
     def Loss_MAE_derivative(self, y_pred, y_label):
-        n = len(y_label)
+        n=len(y_label)
         y_label=y_label.reshape(-1, 1)
         output=np.where(y_pred < y_label, -1/n, 1/n)    
         return output
 
     #Binary Cross Entropy Loss
     def Loss_BCE(self, y_pred, y_label):
-        y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
+        y_pred=np.clip(y_pred, 1e-15, 1 - 1e-15)
         output=-np.mean(y_label * np.log(y_pred) + (1 - y_label) * np.log(1 - y_pred))
         return output
 
     def Loss_BCE_derivative(self, y_pred, y_label):
-        y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
+        y_pred=np.clip(y_pred, 1e-15, 1 - 1e-15)
         output=-(y_label / y_pred) + (1 - y_label) / (1 - y_pred)
         return output
     
     def Loss_CCE(self, y_pred, y_label):
-        eps = 1e-15  # evita log(0)
+        eps=1e-15  # evita log(0)
         y_pred = np.clip(y_pred, eps, 1 - eps)
         output=-np.sum(y_label * np.log(y_pred))
         return output
@@ -173,8 +172,6 @@ class Perdita:
 
 class optimizers:
     def __init__(self, alg_optim, lr, pesi, bias, grad_pesi, grad_bias):
-        self.pesi=pesi
-        self.bias=bias
         self.optim=alg_optim
         self.gradiente_pesi=grad_pesi
         self.gradiente_bias=grad_bias
@@ -185,8 +182,11 @@ class optimizers:
             self.optimizer_SGD()
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
-    def optimizer_SGD(self):
-        pass
+    def optimizer_SGD(self, pesi, bias):
+       for i in reversed(range(len(pesi))):
+           #print(f"pesi: {pesi[i].shape} grad pesi: {self.gradiente_pesi[i].T.shape}")
+           pesi[i] -= self.gradiente_pesi[i].T * self.learning_rate
+           
 
 
 

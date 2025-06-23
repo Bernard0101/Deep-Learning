@@ -6,9 +6,8 @@ import numpy as np  # type: ignore
 
 class Architettura:
     def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epochs:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
-        self.pesi=[np.random.randn(nn_layers[0], features.shape[1])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
+        self.pesi=[np.random.randn(nn_layers[0], features.shape[0])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
         self.bias=[np.random.randn(i, 1) for i in nn_layers]
-        self.autodiff=Autodifferenziattore.Autodiff(strati=(len(nn_layers)-1), pesi=self.pesi, bias=self.bias, activation_fn=attivazione, loss_fn=funzione_perdita)
         self.features=features
         self.targets=targets
         self.inizializzazione=init_pesi
@@ -20,6 +19,7 @@ class Architettura:
         self.optim=ottimizzattore
         self.loss_fn=funzione_perdita
         self.activation_fn=attivazione
+        self.autodiff=Autodifferenziattore.Autodiff(nn_strati=nn_layers, pesi=self.pesi, bias=self.bias, activation_fn=attivazione, loss_fn=funzione_perdita, batch=self.features.shape[0])
         self.SommaPesata=nn_functions.SommaPesata(pesi=self.pesi, bias=self.bias)
         self.attivazione=nn_functions.attivazione(type=attivazione)
         self.Perdita=nn_functions.Perdita(type=funzione_perdita)
@@ -74,8 +74,9 @@ class Architettura:
         
     
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
-    def Backward(self):
-        self.optimizer.optimizer_SGD()
+    def Backward(self, predizioni):
+        self.autodiff.retropropagazione(predizioni=predizioni, targets=self.targets, features=self.features, type=None)
+        self.optimizer.optimizer_SGD(pesi=self.pesi, bias=self.bias)
       
 
     def reset_parametri(self):
@@ -93,7 +94,7 @@ class Architettura:
 
         migliore_alleno=min(self.errori[epoca - patience:epoca])
         current=self.errori[epoca]
-        if migliore_alleno - current < min_delta:
+        if migliore_alleno - current < min_delta or np.isnan(current):
             return True
         return False        
         
@@ -103,11 +104,10 @@ class Architettura:
         self.reset_parametri()
         self.initializzare_pesi(init_pesi=self.inizializzazione)
         for epoch in range(self.epochs):
-            preds=self.Forward(inputs=self.features)
-            loss=self.perdita(predizioni=preds)
-            self.autodiff.show_passaggi()
-            self.autodiff.retropropagazione(predizioni=preds, targets=self.targets)
-            self.autodiff.show_gradients(strato=0)
+            y_preds=self.Forward(inputs=self.features)
+            loss=self.perdita(predizioni=y_preds)
+            #self.autodiff.show_gradients(strato=0)
+            self.Backward(predizioni=y_preds)
             self.errori.append(loss)
             print(f"epoca: {epoch}| perdita: {loss}")
             if(self.regolarizzazione(epoca=epoch, patience=15)):
@@ -117,8 +117,8 @@ class Architettura:
               #      for p in self.pesi:
                #         print(f"media dei pesi: {np.mean(p)}")
 
-    def predict(self, features:np.ndarray):
-        predizione=self.Forward(features=features)
+    def predict(self, inputs):
+        predizione=self.Forward(inputs=inputs)
         return predizione
 
 

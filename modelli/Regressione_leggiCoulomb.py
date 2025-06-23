@@ -22,8 +22,8 @@ K_folds=5
 
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=nn.Architettura(nn_layers=[3, 8, 6, 8, 1], init_pesi="He", epochs=1000,
-                                        features=data_features, targets=data_targets, learning_rate=3e-2, 
+NeuralNet=nn.Architettura(nn_layers=[3, 128, 64, 812, 1], init_pesi="Xavier", epochs=1000,
+                                        features=data_features, targets=data_targets, learning_rate=3e-4, 
                                         ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 
 print(len(data_features))
@@ -34,10 +34,8 @@ processore_dati=processore.Metriche(dataset=data_path, modello=NeuralNet)
 
 
 errore_training_folds, errore_testing_folds=processore_dati.cross_validation(K=K_folds, features=data_features, labels=data_targets)
-pred=NeuralNet.predict(features=data_features)
+pred=NeuralNet.predict(inputs=data_features)
 predizione_denormalizzate=processore.Processore.denormalizzare_predizione(processore, original_target=data_targets, standard_pred=pred)
-print(f"perdita MAE: {nn_func.nn_functions.Loss_MAE(y_pred=predizione_denormalizzate, y_label=data['Forza (N)'].values)}")
-
 features=data[["Carga 1 (Coulombs)", "Carga 2 (Coulombs)", "Distanza (m)"]].values
 forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(features=features)
 
