@@ -122,71 +122,73 @@ class Perdita:
             if(not derivata):
                 return self.Loss_CCE(y_label=y_target, y_pred=y_pred)
             else:
-                pass
+                return self.Loss_CCE_derivative(y_label=y_target, y_pred=y_pred)
         else:
             raise ValueError(f"funzione di costo {type}, non supportata")
 
  #mse Loss
     def Loss_MSE(self, y_pred, y_label):
         #print(f"preds: {y_pred.shape} targets: {y_label.shape}")
-        output=np.mean((y_pred-y_label)**2)
-        return output
+        return np.mean((y_pred-y_label)**2)
         
     def Loss_MSE_derivative(self, y_pred, y_label):
         n=len(y_label)
         y_label=y_label.reshape(-1, 1)
         #print(f"y_pred: {y_pred.shape} y_label: {y_label.shape}")
-        output=-2 * (y_pred-y_label) / n
+        return -2 * (y_pred-y_label) / n
         #print(f"output: {output.shape}")
-        return output
 
     #MAE Loss
     def Loss_MAE(self, y_pred, y_label):
-        output=np.abs(np.mean(y_pred-y_label))
-        return output
+        return np.abs(np.mean(y_pred-y_label))
 
     def Loss_MAE_derivative(self, y_pred, y_label):
         n=len(y_label)
         y_label=y_label.reshape(-1, 1)
-        output=np.where(y_pred < y_label, -1/n, 1/n)    
-        return output
+        return np.where(y_pred < y_label, -1/n, 1/n)    
 
     #Binary Cross Entropy Loss
     def Loss_BCE(self, y_pred, y_label):
         y_pred=np.clip(y_pred, 1e-15, 1 - 1e-15)
-        output=-np.mean(y_label * np.log(y_pred) + (1 - y_label) * np.log(1 - y_pred))
-        return output
+        return -np.mean(y_label * np.log(y_pred) + (1 - y_label) * np.log(1 - y_pred))
 
     def Loss_BCE_derivative(self, y_pred, y_label):
         y_pred=np.clip(y_pred, 1e-15, 1 - 1e-15)
-        output=-(y_label / y_pred) + (1 - y_label) / (1 - y_pred)
-        return output
+        return -(y_label / y_pred) + (1 - y_label) / (1 - y_pred)
     
     def Loss_CCE(self, y_pred, y_label):
         eps=1e-15  # evita log(0)
         y_pred = np.clip(y_pred, eps, 1 - eps)
-        output=-np.sum(y_label * np.log(y_pred))
-        return output
+        return -np.sum(y_label * np.log(y_pred))
+    
+    def Loss_CCE_derivative(self, y_pred, y_label):
+        return -np.sum(y_label/y_pred)
 
   
 
 class optimizers:
-    def __init__(self, alg_optim, lr, pesi, bias, grad_pesi, grad_bias):
+    def __init__(self, alg_optim, grad_pesi, grad_bias):
         self.optim=alg_optim
         self.gradiente_pesi=grad_pesi
         self.gradiente_bias=grad_bias
-        self.learning_rate=lr
 
-    def func(self):
-        if self.optim == "SGD":
-            self.optimizer_SGD()
+    def func(self, pesi, bias, lr, type):
+        if type == "SGD":
+            self.optimizer_SGD(pesi=pesi, bias=bias, lr=lr)
+        else:
+            raise ValueError(f"ottimizzattore: {type} non supportato")
+            
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
-    def optimizer_SGD(self, pesi, bias):
+    def optimizer_SGD(self, pesi, bias, lr):
        for i in reversed(range(len(pesi))):
            #print(f"pesi: {pesi[i].shape} grad pesi: {self.gradiente_pesi[i].T.shape}")
-           pesi[i] -= self.gradiente_pesi[i].T * self.learning_rate
-           
+           pesi[i] -= self.gradiente_pesi[i].T * lr
+           bias[i] -= self.gradiente_bias[i].T * lr
+    
+    def optimizer_Adagrad(self, pesi, bias):
+        pass
+        
 
 
 

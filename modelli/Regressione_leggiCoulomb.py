@@ -22,8 +22,8 @@ K_folds=5
 
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=nn.Architettura(nn_layers=[3, 128, 64, 812, 1], init_pesi="Xavier", epochs=1000,
-                                        features=data_features, targets=data_targets, learning_rate=3e-4, 
+NeuralNet=nn.Architettura(nn_layers=[3, 8, 8, 8, 1], init_pesi="Xavier", epochs=1000,
+                                        features=data_features, targets=data_targets, learning_rate=3e-3, 
                                         ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 
 print(len(data_features))
@@ -85,7 +85,7 @@ plt.show()
 
 plt.figure(figsize=(12, 8))
 plt.scatter(data["Distanza (m)"].values, data["Forza (N)"].values, c="mediumblue", alpha=0.4, label="dati reali rumurosi")
-plt.scatter(x=data["Distanza (m)"].values, y=forza_elettrica, c="darkorange", alpha=0.6, label="dati basati sulla legge fisica")
+plt.scatter(data["Distanza (m)"].values, forza_elettrica, c="darkorange", alpha=0.6, label="dati basati sulla legge fisica")
 plt.scatter(data["Distanza (m)"].values, pred, alpha=0.7, c="limegreen", label="predizione modello")
 plt.yscale("log")
 plt.title("Analise Prestazione modello")

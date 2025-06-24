@@ -23,7 +23,7 @@ class Architettura:
         self.SommaPesata=nn_functions.SommaPesata(pesi=self.pesi, bias=self.bias)
         self.attivazione=nn_functions.attivazione(type=attivazione)
         self.Perdita=nn_functions.Perdita(type=funzione_perdita)
-        self.optimizer=nn_functions.optimizers(alg_optim=self.optim, pesi=self.pesi, bias=self.bias, lr=self.lr, grad_pesi=self.autodiff.gradiente_pesi, grad_bias=self.autodiff.gradiente_bias)
+        self.optimizer=nn_functions.optimizers(alg_optim=self.optim, grad_pesi=self.autodiff.gradiente_pesi, grad_bias=self.autodiff.gradiente_bias)
 
     #implementa un layer qualsiasi della rete Neurale Multistrato 
     def initializzare_pesi(self, init_pesi:str):
@@ -75,8 +75,8 @@ class Architettura:
     
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
     def Backward(self, predizioni):
-        self.autodiff.retropropagazione(predizioni=predizioni, targets=self.targets, features=self.features, type=None)
-        self.optimizer.optimizer_SGD(pesi=self.pesi, bias=self.bias)
+        self.autodiff.retropropagazione(predizioni=predizioni, targets=self.targets, features=self.features)
+        self.optimizer.func(pesi=self.pesi, bias=self.bias, lr=self.lr, type=self.optim)
       
 
     def reset_parametri(self):

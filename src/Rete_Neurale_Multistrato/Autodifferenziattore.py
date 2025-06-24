@@ -44,7 +44,7 @@ class Autodiff:
                     print(f"outputs shape: {value.shape}")
 
 
-    def retropropagazione(self, predizioni, features, targets, type):
+    def retropropagazione(self, predizioni, features, targets):
         calculate_grad=len(self.passaggi)-3
         for passaggio_idx in reversed(range(len(self.passaggi))):
             strato=self.passaggi[passaggio_idx]["strato"]
@@ -65,8 +65,11 @@ class Autodiff:
                 gradiente_delta=(gradiente_loss * gradiente_attivazione)
                 #print(f"gradiente delta: {gradiente_delta.shape}")
                 #print(f"attivazioni precedenti trasposte: {attivazioni_precedenti.T.shape} gradiente delta: {gradiente_delta.shape}")
+                #print(f"gradiente delta: {gradiente_delta.shape} gradiente bias: {(np.ones(gradiente_delta.shape[0]).shape)}")
                 self.gradiente_pesi[strato]=np.dot(attivazioni_precedenti.T, gradiente_delta)
+                self.gradiente_bias[strato]=np.dot(np.ones(gradiente_delta.shape[0]), gradiente_delta) 
                 #print(f"gradiente pesi: {self.gradiente_pesi[strato].shape}")
+                #print(f"gradiente bias: {self.gradiente_bias[strato].shape}")
                 calculate_grad-=2
 
             elif strato < self.strati and passaggio_idx == calculate_grad and strato != 0 : 
@@ -74,8 +77,11 @@ class Autodiff:
                 gradiente_delta=np.dot(gradiente_delta, self.pesi[strato+1]) * gradiente_attivazione
                 #print(f"gradiente delta: {gradiente_delta.shape}")
                 #print(f"attivazioni precedenti trasposte: {attivazioni_precedenti.T.shape} gradiente delta: {gradiente_delta.shape}")
+                #print(f"gradiente delta: {gradiente_delta.shape} gradiente bias: {(np.ones(gradiente_delta.shape[1]).shape)}")
                 self.gradiente_pesi[strato]=np.dot(attivazioni_precedenti.T, gradiente_delta)
+                self.gradiente_bias[strato]=np.dot(np.ones(gradiente_delta.shape[0]), gradiente_delta)
                 #print(f"gradiente pesi: {self.gradiente_pesi[strato].shape}")
+                #print(f"gradiente bias: {self.gradiente_bias[strato].shape}")
                 calculate_grad-=2
             
             elif strato == 0 and passaggio_idx == calculate_grad:
@@ -83,8 +89,11 @@ class Autodiff:
                 gradiente_delta=np.dot(gradiente_delta, self.pesi[strato+1]) * gradiente_attivazione
                 #print(f"gradiente delta: {gradiente_delta.shape}")
                 #print(f"inputs: {features.T.shape} gradiente delta: {gradiente_delta.shape}")
+                #print(f"gradiente delta: {gradiente_delta.shape} gradiente bias: {(np.ones(gradiente_delta.shape[1]).shape)}")
                 self.gradiente_pesi[strato]=np.dot(features.T, gradiente_delta) 
+                self.gradiente_bias[strato]=np.dot(np.ones(gradiente_delta.shape[0]), gradiente_delta)
                 #print(f"gradiente pesi: {self.gradiente_pesi[strato].shape}")
+                #print(f"gradiente bias: {self.gradiente_bias[strato].shape}")
                 break
 
 
