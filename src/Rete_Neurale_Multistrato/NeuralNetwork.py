@@ -6,7 +6,7 @@ import numpy as np  # type: ignore
 
 class Architettura:
     def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epochs:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
-        self.pesi=[np.random.randn(nn_layers[0], features.shape[0])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
+        self.pesi=[np.random.randn(nn_layers[0], features.shape[1])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
         self.bias=[np.random.randn(i, 1) for i in nn_layers]
         self.features=features
         self.targets=targets
@@ -22,7 +22,7 @@ class Architettura:
         self.autodiff=Autodifferenziattore.Autodiff(nn_strati=nn_layers, pesi=self.pesi, bias=self.bias, activation_fn=attivazione, loss_fn=funzione_perdita, batch=self.features.shape[0])
         self.SommaPesata=nn_functions.SommaPesata(pesi=self.pesi, bias=self.bias)
         self.attivazione=nn_functions.attivazione(type=attivazione)
-        self.Perdita=nn_functions.Perdita(type=funzione_perdita)
+        self.perdita=nn_functions.Perdita(type=funzione_perdita)
         self.optimizer=nn_functions.optimizers(alg_optim=self.optim, grad_pesi=self.autodiff.gradiente_pesi, grad_bias=self.autodiff.gradiente_bias)
 
     #implementa un layer qualsiasi della rete Neurale Multistrato 
@@ -67,8 +67,8 @@ class Architettura:
         return predizione
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
-    def perdita(self, predizioni:np.ndarray):
-        loss=self.Perdita.func(y_pred=predizioni, y_target=self.targets, type=self.loss_fn, derivata=False)
+    def Perdita(self, predizioni:np.ndarray):
+        loss=self.perdita.func(y_pred=predizioni, y_target=self.targets, type=self.loss_fn, derivata=False)
         self.autodiff.memorizzare(strato=(len(self.nn_layers)-1), inputs=[predizioni, self.targets], outputs=loss, operazione="Perdita")
         return loss
         
@@ -88,7 +88,7 @@ class Architettura:
         self.errori=[]
 
 
-    def regolarizzazione(self, epoca, patience, min_delta=-1e-4):
+    def regolarizzazione(self, epoca, patience, min_delta=-1e-3):
         if epoca < patience:
             return False
 
@@ -105,7 +105,7 @@ class Architettura:
         self.initializzare_pesi(init_pesi=self.inizializzazione)
         for epoch in range(self.epochs):
             y_preds=self.Forward(inputs=self.features)
-            loss=self.perdita(predizioni=y_preds)
+            loss=self.Perdita(predizioni=y_preds)
             #self.autodiff.show_gradients(strato=0)
             self.Backward(predizioni=y_preds)
             self.errori.append(loss)
@@ -120,6 +120,6 @@ class Architettura:
     def predict(self, inputs):
         predizione=self.Forward(inputs=inputs)
         return predizione
-
+    
 
             

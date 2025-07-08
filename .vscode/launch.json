@@ -2,10 +2,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: PINN",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.PINN.Physics_informedNN",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+
+        },
+        {
             "name": "Python Debugger: MRUA",
             "type": "debugpy",
             "request": "launch",
-            "module": "modelli.Regressione_MRUA"
+            "module": "modelli.Regressione_MRUA",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
         },
         {
             "name": "Python Debugger: LeggiCoulomb",

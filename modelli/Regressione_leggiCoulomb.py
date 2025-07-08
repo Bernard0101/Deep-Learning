@@ -22,7 +22,7 @@ K_folds=5
 
 
 #alleno del modello, e utilizzazione di metriche per valutazione
-NeuralNet=nn.Architettura(nn_layers=[3, 8, 8, 8, 1], init_pesi="Xavier", epochs=1000,
+NeuralNet=nn.Architettura(nn_layers=[3, 6, 4, 1], init_pesi="Xavier", epochs=1000,
                                         features=data_features, targets=data_targets, learning_rate=3e-3, 
                                         ottimizzattore="SGD", funzione_perdita="MSE", attivazione="leaky_ReLU")
 

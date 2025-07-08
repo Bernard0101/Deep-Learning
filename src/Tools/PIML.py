@@ -5,8 +5,9 @@ from src.Tools import processore
 
 
 class Fisica:
-    def __init__(self, dataset):
-        self.dataset=dataset
+    def __init__(self, features, targets):
+        self.features=features
+        self.targets=targets
         
 
     def Forza_elettrica_leggeCoulomb(features):

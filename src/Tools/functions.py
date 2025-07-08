@@ -19,7 +19,7 @@ class SommaPesata:
         pesi=self.pesi[layer]
         bias=self.bias[layer]
         out_features=np.matmul(inputs, pesi.T) + bias
-        #print(f"out_features shape: {out_features.shape}")
+        print(f"out_features shape: {out_features.shape}")
         return out_features
             
     
