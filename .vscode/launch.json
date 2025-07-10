@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: PINN",
+            "name": "Python Debugger: data_generation Debugger",
             "type": "debugpy",
             "request": "launch",
-            "module": "src.PINN.Physics_informedNN",
+            "module": "Datasets.generate_dataset_legge_Coulomb",
             "cwd": "${workspaceFolder}",
             "justMyCode": true
 

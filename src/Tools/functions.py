@@ -14,12 +14,12 @@ class SommaPesata:
             return self.nn_derivata_sommaPesata(layer=strato)
 
     def nn_SommaPesata(self, inputs, layer:int):
-        #print(f"features type: {type(inputs.shape)} pesi type: {type(self.pesi[layer])} bias type: {type(self.bias[layer])}")
-        #print(f"features shape: {inputs.shape} pesi shape: {self.pesi[layer].T.shape} bias shape: {self.bias[layer].shape}")
+        #print(f"pesi type: {type(self.pesi[layer])} features type: {type(inputs.shape)} bias type: {type(self.bias[layer])}")
+        #print(f"pesi shape: {self.pesi[layer].shape} features shape: {inputs.shape} bias shape: {self.bias[layer].shape}")
         pesi=self.pesi[layer]
         bias=self.bias[layer]
-        out_features=np.matmul(inputs, pesi.T) + bias
-        print(f"out_features shape: {out_features.shape}")
+        out_features=np.matmul(inputs, pesi) + bias
+        #print(f"out_features shape: {out_features.shape}")
         return out_features
             
     
@@ -167,15 +167,19 @@ class Perdita:
   
 
 class optimizers:
-    def __init__(self, alg_optim, grad_pesi, grad_bias):
+    def __init__(self, alg_optim, pesi, bias, grad_pesi, grad_bias):
         self.optim=alg_optim
         self.gradiente_pesi=grad_pesi
         self.gradiente_bias=grad_bias
+        self.grad_pesi_anteriore=[np.zeros_like(p)for p in pesi]
+        self.grad_bias_anteriore=[np.zeros_like(b)for b in bias]
 
     def func(self, pesi, bias, lr, type):
         if type == "SGD":
             self.optimizer_SGD(pesi=pesi, bias=bias, lr=lr)
-        else:
+        elif type == "Adagrad":
+            self.optimizer_Adagrad(pesi=pesi, bias=bias, lr=lr)
+        else:    
             raise ValueError(f"ottimizzattore: {type} non supportato")
             
 
@@ -183,11 +187,22 @@ class optimizers:
     def optimizer_SGD(self, pesi, bias, lr):
        for i in reversed(range(len(pesi))):
            #print(f"pesi: {pesi[i].shape} grad pesi: {self.gradiente_pesi[i].T.shape}")
-           pesi[i] -= self.gradiente_pesi[i].T * lr
-           bias[i] -= self.gradiente_bias[i].T * lr
+           pesi[i] -= self.gradiente_pesi[i] * lr
+           bias[i] -= self.gradiente_bias[i] * lr
     
-    def optimizer_Adagrad(self, pesi, bias):
-        pass
+    def optimizer_Adagrad(self, pesi, bias, lr):
+        for i in reversed(range(len(pesi)-1)):
+            gradiente_pesi_accumulato=self.grad_pesi_anteriore[i] + np.power(self.gradiente_pesi[i], 2)
+            gradiente_bias_accumulato=self.grad_bias_anteriore[i] + np.power(self.gradiente_bias[i], 2)
+            #print(f"grad_pesi accumulato: {gradiente_pesi_accumulato.shape} grad_pesi: {self.gradiente_pesi[i].shape}")
+            #print(f"grad_bias accumulato: {gradiente_bias_accumulato.shape} grad_bias: {self.gradiente_bias[i].shape}")
+            #print(f"pesi: {pesi[i].shape} grad_pesi_accumulato: {gradiente_pesi_accumulato[i].shape}")
+            #print(f"bias: {bias[i].shape} grad_bias_accumulato: {gradiente_bias_accumulato[i].shape}")
+            pesi[i] -= lr / np.sqrt(gradiente_pesi_accumulato + 3e-6) * self.gradiente_pesi[i]
+            bias[i] -= lr / np.sqrt(gradiente_bias_accumulato + 3e-6) * self.gradiente_bias[i]
+            self.grad_pesi_anteriore[i]=gradiente_pesi_accumulato
+            self.grad_bias_anteriore[i]=gradiente_bias_accumulato
+
         
 
 

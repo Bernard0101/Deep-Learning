@@ -6,22 +6,26 @@ import matplotlib.pyplot as plt # type: ignore
 from src.Tools import functions as nn_func
 
 class Metriche:
+    
 
     def __init__(self, modello, dataset):
         self.modello=modello
         self.dataset=pd.read_csv(dataset)
+        self.x_train=None
+        self.y_train=None
+        self.x_test=None
+        self.y_test=None
 
 
     def split_data(self, fattore, features, labels):
         split=fattore*len(features)
-        X_train=features[:split]
-        X_test=features[:split]
-        y_train=labels[split:]
-        y_test=labels[split:]
-        return X_train, y_train, X_test, y_test
+        self.x_train=features[:split]
+        self.x_test=features[split:]
+        self.y_train=labels[:split]
+        self.y_test=labels[split:]
 
 
-    def cross_validation(self, K:int, features:np.ndarray, labels:np.ndarray):
+    def cross_validation(self, K:int, features:np.ndarray, targets:np.ndarray):
         errore_training_folds=[]
         errore_testing_folds=None
 
@@ -31,32 +35,29 @@ class Metriche:
         #mescola i dati ogni volta che e necessario esseguire una nuova validazione
         indices=np.arange(len(features))
         np.random.shuffle(indices)
-        features, labels=np.array(features[indices]), np.array(labels[indices])
+        features, targets=np.array(features[indices]), np.array(targets[indices])
 
         #crea una lista dove ogni elemento di essa e un'altra lista contenente fold size elementi 
         feature_folds=[features[i*fold_size:fold_size*(i+1)]for i in range(K)]
-        label_folds=[labels[i*fold_size:fold_size*(i+1)]for i in range(K)]
+        target_folds=[targets[i*fold_size:fold_size*(i+1)]for i in range(K)]
 
 
         #allenare e testare il modello
         for i in range(K-1):
-            print(f"========================================\nAlleno fold: {i}")
             X_train=feature_folds[i]
-            y_train=label_folds[i]
+            y_train=target_folds[i]
 
-            print(f"X_train: {X_train.shape}")
-            print(f"y_train: {y_train.shape}")
-
-            #ogni uno di essi ha una misura uguale a len(features) // K
+            #ognuno di essi ha una misura uguale a len(features) // K
             self.modello.features=X_train
             self.modello.targets=y_train
             self.modello.Allenare()
             errore_training_folds.append(self.modello.errori)    
 
-        print(f"====================================\nTeste fold: {K}")
-        self.modello.Allenare()
-        errore_testing_folds=self.modello.errori
-
+        
+        self.x_test=feature_folds[K-1]
+        self.y_test=target_folds[K-1]
+        preds=self.modello.predict(inputs=self.x_test)
+        errore_testing_folds=self.modello.Perdita(predizioni=preds, targets=self.y_test)
         
         return errore_training_folds, errore_testing_folds
 
@@ -89,7 +90,6 @@ class Processore:
     
     #funzione che criptofgrafa i dati categorici del datset seguendo l'algoritmo di OneHot-encoding
     def codificazione_OneHot(self, data_categorica):
-
         #crea un dizionario contenendo tutte le categorie per ogni valore assegnandoli 
         categorie_uniche=np.unique(data_categorica)
         categorie_indici={idx : cat for idx, cat in enumerate(categorie_uniche)}
@@ -101,7 +101,6 @@ class Processore:
             OneHot[idx][pos_OneHot]=1
         return categorie_indici, OneHot
             
-
 
     #funzione che decriptografa i dati categorici del dataset
     def decodificazione_OneHot(self, OneHot, categorie_indici):

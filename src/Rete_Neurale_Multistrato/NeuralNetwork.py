@@ -1,17 +1,17 @@
 from src.Rete_Neurale_Multistrato import Autodifferenziattore
 from src.Tools import functions as nn_functions
-from src.Tools import PIML as fisica_func
 import numpy as np  # type: ignore
 
 
 class Architettura:
     def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epochs:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
-        self.pesi=[np.random.randn(nn_layers[0], features.shape[1])] + [np.random.randn(nn_layers[i], nn_layers[i-1]) for i in range(1, len(nn_layers))]
-        self.bias=[np.random.randn(i, 1) for i in nn_layers]
+        self.pesi=[np.random.randn(features.shape[1], nn_layers[0])] + [np.random.randn(nn_layers[i-1], nn_layers[i]) for i in range(1, len(nn_layers))]
+        self.bias=[np.random.randn(1, i) for i in nn_layers]
         self.features=features
         self.targets=targets
         self.inizializzazione=init_pesi
         self.nn_layers=nn_layers
+        self.preds=None
         self.errori=[]
         self.epoche=[]
         self.epochs=epochs
@@ -23,7 +23,7 @@ class Architettura:
         self.SommaPesata=nn_functions.SommaPesata(pesi=self.pesi, bias=self.bias)
         self.attivazione=nn_functions.attivazione(type=attivazione)
         self.perdita=nn_functions.Perdita(type=funzione_perdita)
-        self.optimizer=nn_functions.optimizers(alg_optim=self.optim, grad_pesi=self.autodiff.gradiente_pesi, grad_bias=self.autodiff.gradiente_bias)
+        self.optimizer=nn_functions.optimizers(alg_optim=self.optim, pesi=self.pesi, bias=self.bias, grad_pesi=self.autodiff.gradiente_pesi, grad_bias=self.autodiff.gradiente_bias)
 
     #implementa un layer qualsiasi della rete Neurale Multistrato 
     def initializzare_pesi(self, init_pesi:str):
@@ -40,6 +40,16 @@ class Architettura:
                 self.pesi[i]=np.random.randn(*self.pesi[i].shape) * np.sqrt(2. / fan_in)
         else:
             raise ValueError(f"funzione di inizializzazione dei pesi: {init_pesi} non supportata")
+
+
+    def show_parametri(self, strato=0):
+        if strato > (len(self.nn_layers)-1):
+            return None
+        else:
+            print(f"strato: {strato}")
+            print(f"pesi: {self.pesi[strato].shape}")
+            print(f"bias: {self.bias[strato].shape}")
+            self.show_parametri(strato+1)
 
 
     #implementa la forward propagation d'accordo con il tipo di ativazione e initializzazione dei pesi
@@ -67,21 +77,21 @@ class Architettura:
         return predizione
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
-    def Perdita(self, predizioni:np.ndarray):
-        loss=self.perdita.func(y_pred=predizioni, y_target=self.targets, type=self.loss_fn, derivata=False)
-        self.autodiff.memorizzare(strato=(len(self.nn_layers)-1), inputs=[predizioni, self.targets], outputs=loss, operazione="Perdita")
+    def Perdita(self, predizioni:np.ndarray, targets):
+        loss=self.perdita.func(y_pred=predizioni, y_target=targets, type=self.loss_fn, derivata=False)
+        self.autodiff.memorizzare(strato=(len(self.nn_layers)-1), inputs=[predizioni, targets], outputs=loss, operazione="Perdita")
         return loss
         
     
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
-    def Backward(self, predizioni):
-        self.autodiff.retropropagazione(predizioni=predizioni, targets=self.targets, features=self.features)
+    def Backward(self, features, targets, predizioni):
+        self.autodiff.retropropagazione(predizioni=predizioni, targets=targets, features=features)
         self.optimizer.func(pesi=self.pesi, bias=self.bias, lr=self.lr, type=self.optim)
       
 
     def reset_parametri(self):
-        self.pesi=[np.random.randn(self.nn_layers[0], self.features.shape[1])] + [np.random.randn(self.nn_layers[i], self.nn_layers[i-1]) for i in range(1, len(self.nn_layers))]
-        self.bias=[np.random.randn(i) for i in self.nn_layers]
+        self.pesi=[np.random.randn(self.features.shape[1], self.nn_layers[0])] + [np.random.randn(self.nn_layers[i-1], self.nn_layers[i]) for i in range(1, len(self.nn_layers))]
+        self.bias=[np.random.randn(1, i) for i in self.nn_layers]
         self.SommaPesata.pesi=self.pesi
         self.SommaPesata.bias=self.bias
         self.autodiff.passaggi=[]
@@ -98,27 +108,34 @@ class Architettura:
             return True
         return False        
         
+
+    def shuffle_data(self):
+        indices=np.arange(len(self.features))
+        np.random.shuffle(indices)
+        features, targets=self.features[indices], self.targets[indices]
+        return features, targets
+
                   
     #loop di addestramento della rete d'accordo con la quantita di epoche
     def Allenare(self):
         self.reset_parametri()
         self.initializzare_pesi(init_pesi=self.inizializzazione)
+        features, targets=self.shuffle_data()
         for epoch in range(self.epochs):
-            y_preds=self.Forward(inputs=self.features)
-            loss=self.Perdita(predizioni=y_preds)
-            #self.autodiff.show_gradients(strato=0)
-            self.Backward(predizioni=y_preds)
+            y_preds=self.Forward(inputs=features)
+            loss=self.Perdita(targets=targets, predizioni=y_preds)
+            self.Backward(features=features, targets=targets, predizioni=y_preds)
             self.errori.append(loss)
-            print(f"epoca: {epoch}| perdita: {loss}")
             if(self.regolarizzazione(epoca=epoch, patience=15)):
                 break
         self.epoche.append(epoch)
             #if epoch % 5 == 0:
-              #      for p in self.pesi:
-               #         print(f"media dei pesi: {np.mean(p)}")
+            #      for p in self.pesi:
+            #         print(f"media dei pesi: {np.mean(p)}")
 
     def predict(self, inputs):
         predizione=self.Forward(inputs=inputs)
+        self.preds=predizione
         return predizione
     
 

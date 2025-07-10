@@ -10,36 +10,12 @@ class Fisica:
         self.targets=targets
         
 
-    def Forza_elettrica_leggeCoulomb(features):
+    def Forza_elettrica_leggeCoulomb(q1, q2, dist):
+        delta=3e-9
         k=8.987e9
-        carica_1=features[:, 0]
-        carica_2=features[:, 1]
-        distanza=features[:, 2]
-        forza_elettrica=k * (carica_1 * carica_2) / distanza ** 2
+        forza_elettrica=k * np.dot(q1, q2) / dist ** 2 + delta
         return forza_elettrica.flatten()
     
-    def MAE_leggeCoulomb(self, y_pred, features):
-        forza_elettrica=self.Forza_elettrica_leggeCoulomb(features=features)
-        MAE_leggeColomb=nn_func.nn_functions.Loss_MAE(y_pred=y_pred, y_label=forza_elettrica)
-        return MAE_leggeColomb
-
-    def MAE_derivata_leggeCoulomb(self, y_pred, features):
-        forza_elettrica=self.Forza_elettrica_leggeCoulomb(features=features)
-        MAE_derivata_leggeCoulumb=nn_func.nn_functions.Loss_MAE_derivative(y_pred=y_pred, y_label=forza_elettrica)
-        return MAE_derivata_leggeCoulumb
-
-
-    def MSE_leggeCoulomb(self, y_pred, features):
-        forza_elettrica=self.Forza_elettrica_leggeCoulomb(features=features)
-        std_forza_elettrica=processore.Processore.standardizzare_data(data=forza_elettrica)
-        MSE_leggeColumb=nn_func.nn_functions.Loss_MSE(y_pred=y_pred, y_label=std_forza_elettrica)
-        return MSE_leggeColumb
-
-    def MSE_derivata_leggeCoulomb(self, features, y_pred):
-        forza_elettrica=self.Forza_elettrica_leggeCoulomb(features=features)
-        std_forza_elettrica=processore.Processore.standardizzare_data(data=forza_elettrica)
-        MSE_derivata_leggeCoulomb=nn_func.nn_functions.Loss_MSE_derivative(y_pred=y_pred, y_label=std_forza_elettrica)
-        return MSE_derivata_leggeCoulomb
-       
+   
 
         
