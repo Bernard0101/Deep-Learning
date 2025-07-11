@@ -3,13 +3,13 @@ import matplotlib.pyplot as plt # type: ignore
 import numpy as np # type: ignore
 
 from src.Rete_Neurale_Multistrato import NeuralNetwork as nn
-from src.Tools import processore
+from Tools import utils
 from src.Tools import functions as nn_func
 
 file_path="Datasets/fisica_MRUA.csv"
 data=pd.read_csv(file_path)
 
-data_std=processore.Processore.standardizzare_data(data=data)
+data_std=utils.Processore.standardizzare_data(data=data)
 
 print(data.head())
 features=data_std[["Tempo (s)","Accelerazione (m/s²)","Velocita (m/s)"]].values
@@ -19,7 +19,7 @@ NeuralNet=nn.Architettura(features=features, targets=targets, nn_layers=[3, 4, 4
                                         init_pesi="He", attivazione="leaky_ReLU", funzione_perdita="MSE", 
                                         ottimizzattore="SGD", learning_rate=0.001, epochs=50)
 
-Processore=processore.Metriche(modello=NeuralNet, dataset=file_path)
+Processore=utils.Metriche(modello=NeuralNet, dataset=file_path)
 
 k_folds=5
 errore_training_folds, errore_testing_folds=Processore.cross_validation(K=k_folds, features=NeuralNet.features, labels=NeuralNet.targets)

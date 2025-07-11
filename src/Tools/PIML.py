@@ -1,7 +1,7 @@
 import numpy as np
 
 from src.Tools import functions as nn_func
-from src.Tools import processore
+from src.Tools import utils
 
 
 class Fisica:
@@ -11,9 +11,8 @@ class Fisica:
         
 
     def Forza_elettrica_leggeCoulomb(q1, q2, dist):
-        delta=3e-9
         k=8.987e9
-        forza_elettrica=k * np.dot(q1, q2) / dist ** 2 + delta
+        forza_elettrica=k * (q1 * q2) / dist ** 2
         return forza_elettrica.flatten()
     
    

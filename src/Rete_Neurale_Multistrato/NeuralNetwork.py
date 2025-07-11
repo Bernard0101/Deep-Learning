@@ -126,6 +126,7 @@ class Architettura:
             loss=self.Perdita(targets=targets, predizioni=y_preds)
             self.Backward(features=features, targets=targets, predizioni=y_preds)
             self.errori.append(loss)
+            print(f"epoca: {epoch}| errore: {loss}")
             if(self.regolarizzazione(epoca=epoch, patience=15)):
                 break
         self.epoche.append(epoch)

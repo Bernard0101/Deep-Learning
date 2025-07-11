@@ -56,13 +56,14 @@ class Metriche:
         
         self.x_test=feature_folds[K-1]
         self.y_test=target_folds[K-1]
-        preds=self.modello.predict(inputs=self.x_test)
-        errore_testing_folds=self.modello.Perdita(predizioni=preds, targets=self.y_test)
+        self.modello.features=self.x_test
+        self.modello.targets=self.y_test
+        self.modello.Allenare()
         
         return errore_training_folds, errore_testing_folds
 
 
-class Processore:
+class processore:
     def __init__(self, dataset, modello):
         self.dataset=pd.read_csv(dataset)
         self.modello=modello
