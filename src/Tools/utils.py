@@ -48,12 +48,13 @@ class Metriche:
             y_train=target_folds[i]
 
             #ognuno di essi ha una misura uguale a len(features) // K
+            print(f"=====================================\nAlleno: {i+1}")
             self.modello.features=X_train
             self.modello.targets=y_train
             self.modello.Allenare()
             errore_training_folds.append(self.modello.errori)    
 
-        
+        print(f"=====================================\nAlleno: {K}")
         self.x_test=feature_folds[K-1]
         self.y_test=target_folds[K-1]
         self.modello.features=self.x_test

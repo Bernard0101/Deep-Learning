@@ -27,22 +27,25 @@ df["carica_q1"]=(cariche_1 * q1_unit)
 df["carica_q2"]=(cariche_2 * q2_unit)
 print(df.head())
 
-
 #verifica della coerenza del dataset con la legge fisica
 forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df["carica_q1"].values, q2=df["carica_q2"].values, dist=df["distanza (m)"].values)
 loss=nn_func.Perdita.Loss_MAE(self=nn_func.Perdita, y_pred=df["forza (N)"].values, y_label=forza_elettrica)
 print(loss)
 
-carica_q1=utils.processore.standardizzare_data(data=df["carica_q1"].values)
-carica_q2=utils.processore.standardizzare_data(data=df["carica_q2"].values)
-distanza=utils.processore.standardizzare_data(data=df["distanza (m)"].values)
-forza=utils.processore.standardizzare_data(data=df["forza (N)"].values)
+#carica_q1=utils.processore.standardizzare_data(data=df["carica_q1"].values)
+#carica_q2=utils.processore.standardizzare_data(data=df["carica_q2"].values)
+#distanza=utils.processore.standardizzare_data(data=df["distanza (m)"].values)
+#forza=utils.processore.standardizzare_data(data=df["forza (N)"].values)
 
+#feature engieneering per rendere i legami tra i dati piu facili da capirsi
+prodotto_cariche=df["carica_q2"].values * df["carica_q1"].values
+distanza=df["distanza (m)"].values
+rapporto_distanza=1 / df["distanza (m)"].values
+quadrato_distanza=df["distanza (m)"] ** 2
 
 #separazione del dataset in features e labels
-prodotto_cariche=carica_q1*carica_q2
-data_features=np.column_stack((prodotto_cariche, distanza))
-data_targets=forza
+data_features=np.column_stack((prodotto_cariche, distanza, rapporto_distanza, quadrato_distanza))
+data_targets=df["forza (N)"].values
 K_folds=6
 
 #assicurare le dimensioni dei features e targets
@@ -51,9 +54,9 @@ print(f"targets: {data_targets.shape}")
 
 
 #instanziare il modello di rete neurale, con tutti i parametri
-NeuralNet=nn.Architettura(nn_layers=[2, 6, 4, 1], init_pesi="Xavier", epochs=1000,
-                                        features=data_features, targets=data_targets, learning_rate=3e-2, 
-                                        ottimizzattore="Adagrad", funzione_perdita="MSE", attivazione="leaky_ReLU")
+NeuralNet=nn.Architettura(nn_layers=[4, 4, 4, 1], init_pesi="He", epochs=1000,
+                                        features=data_features, targets=data_targets, learning_rate=5e-3, 
+                                        ottimizzattore="Adagrad", funzione_perdita="MSE", attivazione="Tanh")
 
 #istanziare l'oggetti per organizzazione e processamento dei dati
 metriche=utils.Metriche(dataset=data_path, modello=NeuralNet)
@@ -67,16 +70,8 @@ forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df["carica_q1"].valu
 #plottare la distanza contro la forza elettrica e il valore del prodotto tra le cariche
 F_norm=forza_elettrica / np.absolute(prodotto_cariche)
 plt.figure(figsize=(12, 8))
-sc=plt.scatter(
-    df["distanza (m)"].values,
-    F_norm,
-    c=np.log10(np.abs(prodotto_cariche)),
-    cmap="plasma",
-    s=40,
-    alpha=0.7
-)
+sc=plt.scatter(df["distanza (m)"].values, F_norm, c=np.log10(np.abs(prodotto_cariche)), cmap="plasma", s=40, alpha=0.7)
 plt.colorbar(sc, label='prodotto assulto tra le cariche legge: |q1 * q2|')
-plt.xscale("log")
 plt.yscale("log")
 plt.title("Legame: Distanza contro Forza tra le cariche")
 plt.xlabel("distanza (m^2)")
@@ -98,16 +93,16 @@ for i, ax in enumerate(asse.flatten()):
 fig.suptitle(f"Analisi Progresso Allenamento del modello, ottimizzattore: {NeuralNet.optim}")
 plt.show()
 
-#plot 
-plt.figure(figsize=(10, 6))
-plt.scatter(metriche.x_test[:, 1], metriche.y_test, s=25, c="mediumblue", label=f"dati dataset")
-plt.scatter(metriche.x_test[:, 1], NeuralNet.preds[:, 0], s=25, c="orangered", label=f"predizioni modello")
-plt.title("Errore Test Fold")
-plt.xlabel("distanza in metri")
-plt.ylabel("forza in newtons")
-plt.grid(True)
-plt.legend()
-plt.show()
+
+#plt.figure(figsize=(10, 6))
+#lt.scatter(metriche.x_test[:, 1], metriche.y_test, s=25, c="mediumblue", label=f"dati dataset")
+#plt.scatter(metriche.x_test[:, 1], NeuralNet.preds[:, 0], s=25, c="orangered", label=f"predizioni modello")
+#plt.title("Errore Test Fold")
+#plt.xlabel("distanza in metri")
+#plt.ylabel("forza in newtons")
+#plt.grid(True)
+#plt.legend()
+#plt.show()
 
 media_errore_folds=[np.mean(i) for i in errore_training_folds]
 plt.figure(figsize=(12, 8))
@@ -124,6 +119,7 @@ predizioni=NeuralNet.predict(inputs=data_features)
 plt.figure(figsize=(12, 8))
 plt.scatter(df["distanza (m)"].values, df["forza (N)"].values, c="mediumblue", alpha=0.4, label="dati rumurosi")
 plt.scatter(df["distanza (m)"].values, predizioni, alpha=0.7, c="limegreen", label="predizioni del modello")
+plt.xscale("log")
 plt.yscale("log")
 plt.title("Analise Prestazione modello")
 plt.xlabel("Distanza in metri")
