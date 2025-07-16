@@ -1,3 +1,5 @@
+import PIL
+import PIL.Image
 import matplotlib.pyplot as plt # type: ignore
 import pandas as pd # type: ignore
 import numpy as np # type: ignore
@@ -42,35 +44,29 @@ print(loss)
 #feature engieneering con polynomial features per rendere i legami tra i dati piu facili da capirsi
 carica_q1_norm=np.absolute(df["Carica_1 (C)"].values - min(df["Carica_1 (C)"].values) / max(df["Carica_1 (C)"].values) - min(df["Carica_1 (C)"].values))
 carica_q2_norm=np.absolute(df["Carica_2 (C)"].values - min(df["Carica_2 (C)"].values) / max(df["Carica_2 (C)"].values) - min(df["Carica_2 (C)"].values))
-#distanza=df["distanza (m)"].values
+distanza=df["distanza (m)"].values
 prodotto_cariche=np.absolute(df["Carica_1 (C)"].values * df["Carica_2 (C)"].values)
-#rapporto_distanza=1 / df["distanza (m)"].values
-#quadrato_distanza=df["distanza (m)"].values ** 2
+rapporto_distanza=1 / df["distanza (m)"].values
+quadrato_distanza=df["distanza (m)"].values ** 2
 rapporto_quadrato_distanza=1 / df["distanza (m)"].values ** 2
-#legge_coulomb=np.absolute(carica_q1 * carica_q2) / np.power(distanza, 2)
+legge_coulomb=np.absolute(carica_q1 * carica_q2) / np.power(distanza, 2)
 
 #definizione dei targets come la il log della norma della forza 
 F_log_norm=np.log10(np.absolute(df["forza (N)"].values) / np.absolute(prodotto_cariche))
 
 
 #separazione del dataset in features e labels
-data_features=np.column_stack((carica_q1_norm, carica_q2_norm, prodotto_cariche, rapporto_quadrato_distanza))
+data_features=np.column_stack((prodotto_cariche, quadrato_distanza))
 data_targets=F_log_norm
 
-
-
-#instanziare il modello di rete neurale, con tutti i parametri
-NeuralNet=nn.Architettura(nn_layers=[8, 8, 16, 16, 8, 1], init_pesi="He", epochs=1000,
-                                        features=data_features, targets=data_targets, learning_rate=1e-2, 
-                                        ottimizzattore="Adagrad", funzione_perdita="MSE", attivazione="leaky_ReLU")
-
-#istanziare l'oggetti per organizzazione e processamento dei dati
-metriche=utils.Metriche(dataset=data_path, modello=NeuralNet)
-
-#allenare e valutare il modello con la validazione incrociata
-K_folds=6
-errore_training_folds, errore_testing_folds=metriche.cross_validation(K=K_folds, features=data_features, targets=data_targets)
-forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df["Carica_1 (C)"].values, q2=df["Carica_2 (C)"].values, dist=df["distanza (m)"].values)
+#plottare i dati puri rumurosi
+plt.figure(figsize=(12, 8))
+plt.scatter(df["distanza (m)"].values, y=df["forza (N)"].values, alpha=0.7, c="mediumblue", label="dati puri rumurosi")
+plt.title("Analisi del contenuto del dataset")
+plt.xlabel("distanza (m^2)")
+plt.ylabel("Forza (N)")
+plt.grid(True)
+plt.show()
 
 
 #plottare la distanza contro la forza elettrica e il valore del prodotto tra le cariche
@@ -85,32 +81,47 @@ plt.grid(True)
 plt.show()
 
 
-#plottare l'errore del modello in ogni epoca per ogni fold della validazione incrociata
-fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
-for i, ax in enumerate(asse.flatten()):
-    totale_epoche=np.arange(0, NeuralNet.epoche[i]+1, 1)
-    ax.plot(totale_epoche, errore_training_folds[i], c="red", label=f"Errore folder {i+1}")
-    ax.set_title(f"Errore folder {i+1}")
-    ax.set_xlabel("Iterazioni (epoche)")
-    ax.set_ylabel("Sbaglio")
-    ax.grid(True)
-    ax.legend()
-fig.suptitle(f"Analisi Progresso Allenamento del modello, ottimizzattore: {NeuralNet.optim}")
+#plottare la relazione 1/r^2 che la rete dovra apprendere
+plt.figure(figsize=(12, 8))
+plt.plot(quadrato_distanza, F_log_norm, c="orange", alpha=0.7, label="F~=1/r^2")
+plt.yscale("log")
+plt.title("Legame tra la distanza e la forza elettrica compiuta tra le cariche")
+plt.xlabel("rapporto quadrato della distanza (1/r^2)")
+plt.ylabel("logaritmo della norma della forza")
+plt.grid(True)
+plt.legend()
 plt.show()
 
 
-#plt.figure(figsize=(10, 6))
-#lt.scatter(metriche.x_test[:, 1], metriche.y_test, s=25, c="mediumblue", label=f"dati dataset")
-#plt.scatter(metriche.x_test[:, 1], NeuralNet.preds[:, 0], s=25, c="orangered", label=f"predizioni modello")
-#plt.title("Errore Test Fold")
-#plt.xlabel("distanza in metri")
-#plt.ylabel("forza in newtons")
-#plt.grid(True)
-#plt.legend()
-#plt.show()
+#instanziare il modello di rete neurale, con tutti i parametri
+NeuralNet=nn.Architettura(nn_layers=[2, 8, 16, 16, 8, 1], init_pesi="He", epochs=500,
+                                        features=data_features, targets=data_targets, learning_rate=5e-3, 
+                                        ottimizzattore="Adagrad", funzione_perdita="MSE", attivazione="leaky_ReLU")
 
-n_folds=np.arange(0, len(errore_training_folds), 1)
-media_errore_folds=[np.mean(i) for i in errore_training_folds]
+#istanziare l'oggetti per organizzazione e processamento dei dati
+metriche=utils.Metriche(dataset=data_path, modello=NeuralNet)
+
+#allenare e valutare il modello con la validazione incrociata
+K_folds=5
+metriche.cross_validation(K=K_folds, features=data_features, targets=data_targets)
+forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df["Carica_1 (C)"].values, q2=df["Carica_2 (C)"].values, dist=df["distanza (m)"].values)
+
+
+
+predizioni=NeuralNet.predict(inputs=metriche.x_test)
+plt.figure(figsize=(10, 6))
+plt.scatter(metriche.x_test[:, 1], metriche.y_test, s=25, c="mediumblue", label=f"dati dataset")
+plt.scatter(metriche.x_test[:, 1], predizioni, s=25, c="orangered", label=f"predizioni modello")
+plt.title("Errore Test Fold")
+plt.xlabel("distanza in metri")
+plt.ylabel("forza in newtons")
+plt.grid(True)
+plt.legend()
+plt.show()
+
+
+n_folds=np.arange(0, len(metriche.test_errori), 1)
+media_errore_folds=[np.mean(i) for i in metriche.test_errori]
 plt.figure(figsize=(12, 8))
 plt.bar(n_folds, media_errore_folds, color="navy", label="Errore per fold")
 plt.title("Analise Validazione-incrociata")
@@ -125,7 +136,7 @@ predizioni_log=NeuralNet.predict(inputs=data_features)
 predizioni=np.power(10, predizioni_log)
 segni=np.sign(forza_elettrica)
 predizioni=predizioni.flatten() * segni.flatten()
-Forza=forza_elettrica / np.absolute(prodotto_cariche)
+Forza=df["forza (N)"].values / np.absolute(prodotto_cariche)
 
 print(f"preds: {predizioni.shape} Forza: {Forza.shape}")
 plt.figure(figsize=(12, 8))

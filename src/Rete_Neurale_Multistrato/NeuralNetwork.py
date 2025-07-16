@@ -130,9 +130,7 @@ class Architettura:
             if(self.regolarizzazione(epoca=epoch, patience=15)):
                 break
         self.epoche.append(epoch)
-            #if epoch % 5 == 0:
-            #      for p in self.pesi:
-            #         print(f"media dei pesi: {np.mean(p)}")
+            
 
     def predict(self, inputs):
         predizione=self.Forward(inputs=inputs)

@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: data_generation Debugger",
+            "name": "Python Debugger: Classification test",
             "type": "debugpy",
             "request": "launch",
-            "module": "Datasets.generate_dataset_legge_Coulomb",
+            "module": "modelli.test",
             "cwd": "${workspaceFolder}",
             "justMyCode": true
 

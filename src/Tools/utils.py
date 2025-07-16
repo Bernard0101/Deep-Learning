@@ -11,6 +11,8 @@ class Metriche:
     def __init__(self, modello, dataset):
         self.modello=modello
         self.dataset=pd.read_csv(dataset)
+        self.train_errori=[]
+        self.test_errori=[]
         self.x_train=None
         self.y_train=None
         self.x_test=None
@@ -26,8 +28,6 @@ class Metriche:
 
 
     def cross_validation(self, K:int, features:np.ndarray, targets:np.ndarray):
-        errore_training_folds=[]
-        errore_testing_folds=None
 
         #crea un numero specifico che divide ugualmente tutti elementi dello dataset
         fold_size=len(features) // K
@@ -52,7 +52,7 @@ class Metriche:
             self.modello.features=X_train
             self.modello.targets=y_train
             self.modello.Allenare()
-            errore_training_folds.append(self.modello.errori)    
+            self.train_errori.append(self.modello.errori)    
 
         print(f"=====================================\nAlleno: {K}")
         self.x_test=feature_folds[K-1]
@@ -60,9 +60,31 @@ class Metriche:
         self.modello.features=self.x_test
         self.modello.targets=self.y_test
         self.modello.Allenare()
-        
-        return errore_training_folds, errore_testing_folds
+        self.test_errori.append(self.modello.errori)
 
+
+        #plottare l'errore del modello in ogni epoca per ogni fold della validazione incrociata
+        fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+        totale_epoche_testing=np.arange(0, self.modello.epoche[-1]+1, 1)
+        for i, ax in enumerate(asse.flatten()):
+            totale_epoche_training=np.arange(0, self.modello.epoche[i]+1, 1)
+            ax.plot(totale_epoche_training, self.train_errori[i], lw=5, c="red", label=f"dati di allenamento fold: {i+1}")
+            ax.plot(totale_epoche_testing, self.test_errori[0], lw=5, c="cornflowerblue", label=f"dati di valutazione fold: {K}")
+            ax.set_title(f"Errore folder {i+1}")
+            ax.set_xlabel("Iterazioni (epoche)")
+            ax.set_ylabel(f"funzione costo: {self.modello.loss_fn}")
+            ax.grid(True)
+            ax.legend()
+        plt.suptitle(f"Analisi Progresso Allenamento del modello, ottimizzattore: {self.modello.optim}")
+        plt.show()
+
+
+        #plottare l'errore del modello nella fase di valutazione con l'ultimo fold della validazione incrociata
+       
+    
+
+    def curva_apprendimento(self):
+        pass
 
 class processore:
     def __init__(self, dataset, modello):
@@ -77,7 +99,7 @@ class processore:
         return standard_data
 
     #funzione che denormalizza i dati
-    def denormalizzare_data(self, standard_data, normal_data):
+    def destandardizzare_data(self, standard_data, normal_data):
         mean=normal_data.mean()
         std=normal_data.std()
         denormalized_data=standard_data * std + mean
