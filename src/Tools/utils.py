@@ -64,12 +64,13 @@ class Metriche:
 
 
         #plottare l'errore del modello in ogni epoca per ogni fold della validazione incrociata
+        totale_epoche_testing=np.arange(0, len(self.test_errori[0]), 1)
         fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
-        totale_epoche_testing=np.arange(0, self.modello.epoche[-1]+1, 1)
         for i, ax in enumerate(asse.flatten()):
-            totale_epoche_training=np.arange(0, self.modello.epoche[i]+1, 1)
-            ax.plot(totale_epoche_training, self.train_errori[i], lw=5, c="red", label=f"dati di allenamento fold: {i+1}")
-            ax.plot(totale_epoche_testing, self.test_errori[0], lw=5, c="cornflowerblue", label=f"dati di valutazione fold: {K}")
+            limite=min(len(self.train_errori[i]), len(self.test_errori[0]))
+            totale_epoche=np.arange(0, limite, 1)
+            ax.plot(totale_epoche, self.train_errori[i][:limite], lw=5, c="red", label=f"dati di allenamento fold: {i+1}")
+            ax.plot(totale_epoche, self.test_errori[0][:limite], lw=5, c="cornflowerblue", label=f"dati di valutazione fold: {K}")
             ax.set_title(f"Errore folder {i+1}")
             ax.set_xlabel("Iterazioni (epoche)")
             ax.set_ylabel(f"funzione costo: {self.modello.loss_fn}")
@@ -91,26 +92,41 @@ class processore:
         self.dataset=pd.read_csv(dataset)
         self.modello=modello
 
-    #funzione che scalabilizza i dati 
-    def standardizzare_data(data):
-        mean=data.mean()
-        std=data.std()
-        standard_data=(data - mean) / std
-        return standard_data
+    #scalabilizzatore 
+    def standard_scaler(data):
+        data=np.array(data)
+        mean=np.mean(data)
+        std=np.std(data)
+        scaled_data=(data - mean) / std
+        return scaled_data
+    
 
-    #funzione che denormalizza i dati
-    def destandardizzare_data(self, standard_data, normal_data):
-        mean=normal_data.mean()
-        std=normal_data.std()
-        denormalized_data=standard_data * std + mean
-        return denormalized_data
+    def minMax_scaler(data):
+        data=np.array(data)
+        min_data=np.min(data)
+        max_data=np.max(data)
+        scaled_data=(data - min_data)/(max_data - min_data)
+        return scaled_data
+    
 
-    #funzione che denormalizza le predizioni
-    def denormalizzare_predizione(self, original_target, standard_pred):
-        mean=original_target.mean()
-        std=original_target.std()
-        data_normalizzata=standard_pred * std + mean
-        return data_normalizzata
+    def Robust_scaler(data):
+        data=np.array(data)
+        sorted_data=np.sort(data)
+        Q1=np.percentile(sorted_data, 25)
+        Q2=np.percentile(sorted_data, 50)
+        Q3=np.percentile(sorted_data, 75)
+        scaled_data=(data - Q2)/(Q3 - Q1)
+        return scaled_data
+    
+    def log_scaler(data):
+        data=np.array(data)
+        eps=1e-12
+        scaled_data=np.log10(data + eps)
+        return scaled_data
+
+    
+
+    
     
     #funzione che criptofgrafa i dati categorici del datset seguendo l'algoritmo di OneHot-encoding
     def codificazione_OneHot(self, data_categorica):

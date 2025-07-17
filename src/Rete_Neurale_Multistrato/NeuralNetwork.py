@@ -1,5 +1,6 @@
 from src.Rete_Neurale_Multistrato import Autodifferenziattore
 from src.Tools import functions as nn_functions
+
 import numpy as np  # type: ignore
 
 

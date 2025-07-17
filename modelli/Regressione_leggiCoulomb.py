@@ -1,5 +1,3 @@
-import PIL
-import PIL.Image
 import matplotlib.pyplot as plt # type: ignore
 import pandas as pd # type: ignore
 import numpy as np # type: ignore
@@ -13,7 +11,6 @@ from src.Tools import PIML
 #scaricare il dataset e trasformarlo in un dataframe e fare feature engineering
 data_path="Datasets/Legge_di_Coulomb.csv"
 df=pd.read_csv(data_path)
-
 
 #trasformare i dati di uC e pC, nel rispettivo valore numerico
 df["q1_unita"]=df["q1_unita"].replace({'uC' : 1e-6, 'pC' : 1e-12})
@@ -34,30 +31,26 @@ del df["q1_unita"]
 del df["q2_unita"]
 print(df.head())
 
-
 #verifica della coerenza del dataset con la legge fisica
 forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df["Carica_1 (C)"].values, q2=df["Carica_2 (C)"].values, dist=df["distanza (m)"].values)
 loss=nn_func.Perdita.Loss_MAE(self=nn_func.Perdita, y_pred=df["forza (N)"].values, y_label=forza_elettrica)
 print(loss)
 
-
 #feature engieneering con polynomial features per rendere i legami tra i dati piu facili da capirsi
-carica_q1_norm=np.absolute(df["Carica_1 (C)"].values - min(df["Carica_1 (C)"].values) / max(df["Carica_1 (C)"].values) - min(df["Carica_1 (C)"].values))
-carica_q2_norm=np.absolute(df["Carica_2 (C)"].values - min(df["Carica_2 (C)"].values) / max(df["Carica_2 (C)"].values) - min(df["Carica_2 (C)"].values))
-distanza=df["distanza (m)"].values
-prodotto_cariche=np.absolute(df["Carica_1 (C)"].values * df["Carica_2 (C)"].values)
-rapporto_distanza=1 / df["distanza (m)"].values
+prodotto_cariche=df["Carica_1 (C)"].values * df["Carica_2 (C)"].values
 quadrato_distanza=df["distanza (m)"].values ** 2
-rapporto_quadrato_distanza=1 / df["distanza (m)"].values ** 2
-legge_coulomb=np.absolute(carica_q1 * carica_q2) / np.power(distanza, 2)
+forza_elettrica=df["forza (N)"].values
 
-#definizione dei targets come la il log della norma della forza 
-F_log_norm=np.log10(np.absolute(df["forza (N)"].values) / np.absolute(prodotto_cariche))
-
+#scalabilizzare i dati con il metodo robust scaling
+segni=np.sign(prodotto_cariche)
+scaled_prodotto_cariche=utils.processore.minMax_scaler(data=np.absolute(prodotto_cariche))
+scaled_quadrato_distanza=utils.processore.minMax_scaler(data=np.absolute(quadrato_distanza))
+scaled_forza_elettrica=utils.processore.minMax_scaler(data=np.absolute(forza_elettrica))
 
 #separazione del dataset in features e labels
-data_features=np.column_stack((prodotto_cariche, quadrato_distanza))
-data_targets=F_log_norm
+data_features=np.column_stack((scaled_quadrato_distanza, scaled_prodotto_cariche))
+data_targets=scaled_forza_elettrica
+
 
 #plottare i dati puri rumurosi
 plt.figure(figsize=(12, 8))
@@ -83,8 +76,7 @@ plt.show()
 
 #plottare la relazione 1/r^2 che la rete dovra apprendere
 plt.figure(figsize=(12, 8))
-plt.plot(quadrato_distanza, F_log_norm, c="orange", alpha=0.7, label="F~=1/r^2")
-plt.yscale("log")
+plt.scatter(scaled_quadrato_distanza, scaled_forza_elettrica, c="orange", alpha=0.7, label="F~=1/r^2")
 plt.title("Legame tra la distanza e la forza elettrica compiuta tra le cariche")
 plt.xlabel("rapporto quadrato della distanza (1/r^2)")
 plt.ylabel("logaritmo della norma della forza")
