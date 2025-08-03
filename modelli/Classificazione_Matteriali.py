@@ -23,7 +23,7 @@ data_labels=OneHot_criptografato
 
 NeuralNet=NeuralNetwork.Architettura(nn_layers=[3, 6, 6, 6, 4], init_pesi="He", learning_rate=0.003,
                                         features=data_features, targets=data_labels, epochs=1,
-                                        ottimizzattore="SGD", funzione_perdita="CCE", attivazione="Tanh")
+                                        ottimizzattore="SGD", funzione_perdita="CCE", attivazione="Sigmoid")
 NeuralNet.Allenare()
 
 

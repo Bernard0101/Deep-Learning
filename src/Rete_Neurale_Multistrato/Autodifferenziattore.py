@@ -4,10 +4,10 @@ from src.Tools import functions as nn_functions
 
 
 class Autodiff:
-    def __init__(self, nn_strati, activation_fn, loss_fn, pesi, bias, batch):
-        self.SommaPesata=nn_functions.SommaPesata(pesi=pesi, bias=bias)
-        self.attivazione=nn_functions.attivazione(type=activation_fn)
-        self.Perdita=nn_functions.Perdita(type=loss_fn)
+    def __init__(self, nn_strati, activation_fn, loss_fn, pesi, bias):
+        self.SommaPesata=nn_functions.SommaPesata(autodiff=self, pesi=pesi, bias=bias)
+        self.attivazione=nn_functions.attivazione(autodiff=self, type=activation_fn)
+        self.Perdita=nn_functions.Perdita(autodiff=self, type=loss_fn)
         self.pesi=pesi
         self.bias=bias
         self.passaggi=[]
@@ -20,7 +20,7 @@ class Autodiff:
         self.gradiente_output=None
         
     
-    def memorizzare(self, strato, inputs, outputs, operazione:str):
+    def memorizzare(self, strato, inputs, outputs, operazione):
         passaggio= {"strato":strato,
                     "operazione":operazione,
                     "inputs":inputs,
@@ -52,10 +52,10 @@ class Autodiff:
             elif operazione == "attivazione":
                 attivazioni_precedenti=self.passaggi[passaggio_idx-2]["inputs"]
                 Z=self.passaggi[passaggio_idx]["inputs"] 
-                gradiente_attivazione=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=True)
+                gradiente_attivazione=self.attivazione.func(inputs=Z, strato=strato, type=self.activation_fn, derivata=True)
 
             elif operazione == "somma_pesata":
-                if strato == self.strati and passaggio_idx == (len(self.passaggi)-3):
+                if strato == self.strati:
                     #print(f"grad_loss: {gradiente_loss.shape} grad_attivazione: {gradiente_attivazione.shape}")
                     gradiente_delta=(gradiente_loss * gradiente_attivazione)
                     #print(f"gradiente delta: {gradiente_delta.shape}")
@@ -66,7 +66,7 @@ class Autodiff:
                     #print(f"gradiente pesi: {self.gradiente_pesi[strato].shape}")
                     #print(f"gradiente bias: {self.gradiente_bias[strato].shape}")
 
-                elif strato < self.strati and strato != 0 : 
+                elif strato < self.strati and strato != 0: 
                     #print(f"gradiente delta: {gradiente_delta.shape} pesi strato sucessivo: {self.pesi[strato+1].T.shape} gradiente attivazione: {gradiente_attivazione.shape}")
                     gradiente_delta=np.dot(gradiente_delta, self.pesi[strato+1].T) * gradiente_attivazione
                     #print(f"gradiente delta: {gradiente_delta.shape}")

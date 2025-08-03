@@ -5,26 +5,29 @@ import numpy as np  # type: ignore
 
 
 class Architettura:
-    def __init__(self, nn_layers:list, init_pesi:str, features:np.ndarray, targets:np.ndarray, epochs:int, learning_rate:float, ottimizzattore:str, funzione_perdita:str, attivazione:str):
-        self.pesi=[np.random.randn(features.shape[1], nn_layers[0])] + [np.random.randn(nn_layers[i-1], nn_layers[i]) for i in range(1, len(nn_layers))]
+    def __init__(self, nn_layers, init_pesi, X_train, y_train, epochs, learning_rate, ottimizzattore, funzione_perdita, attivazione, X_test=None, y_test=None):
+        self.pesi=[np.random.randn(X_train.shape[1], nn_layers[0])] + [np.random.randn(nn_layers[i-1], nn_layers[i]) for i in range(1, len(nn_layers))]
         self.bias=[np.random.randn(1, i) for i in nn_layers]
-        self.features=features
-        self.targets=targets
+        self.X_train=X_train
+        self.y_train=y_train
+        self.X_test=X_test
+        self.y_test=y_test
         self.inizializzazione=init_pesi
         self.nn_layers=nn_layers
-        self.preds=None
-        self.errori=[]
+        self.migliore_modello=None
+        self.train_errori=[]
+        self.test_errori=[]
         self.epoche=[]
         self.epochs=epochs
         self.lr=learning_rate
         self.optim=ottimizzattore
         self.loss_fn=funzione_perdita
         self.activation_fn=attivazione
-        self.autodiff=Autodifferenziattore.Autodiff(nn_strati=nn_layers, pesi=self.pesi, bias=self.bias, activation_fn=attivazione, loss_fn=funzione_perdita, batch=self.features.shape[0])
-        self.SommaPesata=nn_functions.SommaPesata(pesi=self.pesi, bias=self.bias)
-        self.attivazione=nn_functions.attivazione(type=attivazione)
-        self.perdita=nn_functions.Perdita(type=funzione_perdita)
-        self.optimizer=nn_functions.optimizers(alg_optim=self.optim, pesi=self.pesi, bias=self.bias, grad_pesi=self.autodiff.gradiente_pesi, grad_bias=self.autodiff.gradiente_bias)
+        self.autodiff=Autodifferenziattore.Autodiff(nn_strati=nn_layers, pesi=self.pesi, bias=self.bias, activation_fn=attivazione, loss_fn=funzione_perdita)
+        self.SommaPesata=nn_functions.SommaPesata(autodiff=self.autodiff, pesi=self.pesi, bias=self.bias)
+        self.attivazione=nn_functions.attivazione(autodiff=self.autodiff, type=attivazione)
+        self.perdita=nn_functions.Perdita(autodiff=self.autodiff, type=funzione_perdita)
+        self.optimizer=nn_functions.optimizers(autodiff=self.autodiff, alg_optim=self.optim, pesi=self.pesi, bias=self.bias)
 
     #implementa un layer qualsiasi della rete Neurale Multistrato 
     def initializzare_pesi(self, init_pesi:str):
@@ -60,20 +63,15 @@ class Architettura:
             #print(f"strato: {layer}")
             if layer == 0:
                 Z=self.SommaPesata.func(inputs=inputs, strato=layer, derivata=False)
-                self.autodiff.memorizzare(strato=layer, inputs=inputs, outputs=Z, operazione="somma_pesata")
-                out_features=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=False)
-                self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=out_features, operazione="attivazione")
+                out_features=self.attivazione.func(inputs=Z, strato=layer, type=self.activation_fn, derivata=False)
 
             elif layer > 0 and layer != len(self.nn_layers)-1: 
                 Z=self.SommaPesata.func(inputs=out_features, strato=layer, derivata=False)
-                self.autodiff.memorizzare(strato=layer, inputs=out_features, outputs=Z, operazione="somma_pesata")
-                out_features=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=False)
-                self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=out_features, operazione="attivazione")
+                out_features=self.attivazione.func(inputs=Z, strato=layer, type=self.activation_fn, derivata=False)
             else:
                 Z=self.SommaPesata.func(inputs=out_features, strato=layer, derivata=False)
-                self.autodiff.memorizzare(strato=layer, inputs=out_features, outputs=Z, operazione="somma_pesata")
-                predizione=self.attivazione.func(inputs=Z, type=self.activation_fn, derivata=False)
-                self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=predizione, operazione="attivazione")
+                predizione=self.attivazione.func(inputs=Z, strato=layer, type=self.activation_fn, derivata=False)
+
 
         return predizione
     
@@ -91,52 +89,57 @@ class Architettura:
       
 
     def reset_parametri(self):
-        self.pesi=[np.random.randn(self.features.shape[1], self.nn_layers[0])] + [np.random.randn(self.nn_layers[i-1], self.nn_layers[i]) for i in range(1, len(self.nn_layers))]
+        self.pesi=[np.random.randn(self.X_train.shape[1], self.nn_layers[0])] + [np.random.randn(self.nn_layers[i-1], self.nn_layers[i]) for i in range(1, len(self.nn_layers))]
         self.bias=[np.random.randn(1, i) for i in self.nn_layers]
         self.SommaPesata.pesi=self.pesi
         self.SommaPesata.bias=self.bias
         self.autodiff.passaggi=[]
-        self.errori=[]
+        self.train_errori=[]
+        self.test_errori=[]
 
+    def salvare_modello(self, epoca, patience):
+        if epoca > patience:
+            migliore_alleno=min(self.errori[:epoca])
+            if self.errori[epoca] < migliore_alleno:
+                self.migliore_modello=self
 
-    def regolarizzazione(self, epoca, patience, min_delta=-1e-3):
+    def early_stop(self, epoca, patience, min_delta=-1e-3):
         if epoca < patience:
             return False
 
-        migliore_alleno=min(self.errori[epoca - patience:epoca])
-        current=self.errori[epoca]
+        migliore_alleno=min(self.train_errori[epoca - patience:epoca])
+        current=self.train_errori[epoca]
         if migliore_alleno - current < min_delta or np.isnan(current):
             return True
         return False        
-        
 
-    def shuffle_data(self):
-        indices=np.arange(len(self.features))
-        np.random.shuffle(indices)
-        features, targets=self.features[indices], self.targets[indices]
-        return features, targets
 
-                  
+    def allenare(self): 
+        y_pred=self.Forward(inputs=self.X_train)
+        loss=self.Perdita(predizioni=y_pred, targets=self.y_train)
+        self.Backward(features=self.X_train, targets=self.y_train, predizioni=y_pred)
+        self.train_errori.append(loss)
+        return loss
+
+    def valutare(self):
+        y_pred=self.Forward(inputs=self.X_test)
+        loss=self.Perdita(predizioni=y_pred, targets=self.y_test)
+        self.autodiff.passaggi=[]
+        self.test_errori.append(loss)
+        return loss
+    
     #loop di addestramento della rete d'accordo con la quantita di epoche
     def Allenare(self):
         self.reset_parametri()
         self.initializzare_pesi(init_pesi=self.inizializzazione)
-        features, targets=self.shuffle_data()
         for epoch in range(self.epochs):
-            y_preds=self.Forward(inputs=features)
-            loss=self.Perdita(targets=targets, predizioni=y_preds)
-            self.Backward(features=features, targets=targets, predizioni=y_preds)
-            self.errori.append(loss)
-            print(f"epoca: {epoch}| errore: {loss}")
-            if(self.regolarizzazione(epoca=epoch, patience=15)):
-                break
-        self.epoche.append(epoch)
-            
+            loss_alleno=self.allenare()
+            loss_valutazione=self.valutare()
+            print(f"epoca: {epoch}| loss alleno: {loss_alleno} | loss valutazione {loss_valutazione}")
+            #if(self.early_stop(epoca=epoch, patience=15)):
+             #   break
 
-    def predict(self, inputs):
-        predizione=self.Forward(inputs=inputs)
-        self.preds=predizione
-        return predizione
+    
     
 
             

@@ -13,8 +13,8 @@ data_path="Datasets/Legge_di_Coulomb.csv"
 df=pd.read_csv(data_path)
 
 #trasformare i dati di uC e pC, nel rispettivo valore numerico
-df["q1_unita"]=df["q1_unita"].replace({'uC' : 1e-6, 'pC' : 1e-12})
-df["q2_unita"]=df["q2_unita"].replace({'uC' : 1e-6, 'pC' : 1e-12})
+df["q1_unita"]=df["q1_unita"].replace({'uC' : 1e-6, 'nC' : 1e-9})
+df["q2_unita"]=df["q2_unita"].replace({'uC' : 1e-6, 'nC' : 1e-9})
 
 #passare i valori per un formato numerico
 cariche_1=df["Carica_1 (C)"].values
@@ -29,78 +29,77 @@ df["Carica_1 (C)"]=carica_q1
 df["Carica_2 (C)"]=carica_q2
 del df["q1_unita"]
 del df["q2_unita"]
-print(df.head())
+
+#applicare undersamppling ai dati della forza piu vicini a zero
+forze_bilanciate=(df["forza (N)"] <= -6e-2) | (df["forza (N)"] >= 6e-2)
+df_bilanciato=df[forze_bilanciate]
+print(df_bilanciato.head())
 
 #verifica della coerenza del dataset con la legge fisica
-forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df["Carica_1 (C)"].values, q2=df["Carica_2 (C)"].values, dist=df["distanza (m)"].values)
-loss=nn_func.Perdita.Loss_MAE(self=nn_func.Perdita, y_pred=df["forza (N)"].values, y_label=forza_elettrica)
-print(loss)
+forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df_bilanciato["Carica_1 (C)"].values, q2=df_bilanciato["Carica_2 (C)"].values, dist=df_bilanciato["distanza (m)"].values)
+loss=nn_func.Perdita.Loss_MAE(self=nn_func.Perdita, y_pred=df_bilanciato["forza (N)"].values, y_label=forza_elettrica)
+
+plt.figure(figsize=(12, 8))
+plt.scatter(df_bilanciato["distanza (m)"].values, df_bilanciato["forza (N)"].values, alpha=0.6, color="mediumblue", label="dati puri rumurosi")
+plt.scatter(df_bilanciato["distanza (m)"].values, forza_elettrica, color="orange", alpha=0.6, label="legge di Coulomb")
+plt.title("Verifica se i dati seguono la legge fisica")
+plt.xlabel("distanza (m)")
+plt.ylabel("Forza (N)")
+plt.legend()
+plt.grid(True)
+plt.show()
 
 #feature engieneering con polynomial features per rendere i legami tra i dati piu facili da capirsi
-prodotto_cariche=df["Carica_1 (C)"].values * df["Carica_2 (C)"].values
-quadrato_distanza=df["distanza (m)"].values ** 2
-forza_elettrica=df["forza (N)"].values
+prodotto_cariche=df_bilanciato["Carica_1 (C)"].values * df_bilanciato["Carica_2 (C)"].values
+quadrato_distanza=df_bilanciato["distanza (m)"].values ** 2
+rapporto_distanza=1 / df_bilanciato["distanza (m)"].values ** 2
+forza_elettrica=df_bilanciato["forza (N)"].values
 
 #scalabilizzare i dati con il metodo robust scaling
 segni=np.sign(prodotto_cariche)
-scaled_prodotto_cariche=utils.processore.minMax_scaler(data=np.absolute(prodotto_cariche))
-scaled_quadrato_distanza=utils.processore.minMax_scaler(data=np.absolute(quadrato_distanza))
-scaled_forza_elettrica=utils.processore.minMax_scaler(data=np.absolute(forza_elettrica))
+scaled_prodotto_cariche=utils.processore.log_scaler(data=np.absolute(prodotto_cariche))
+scaled_quadrato_distanza=utils.processore.log_scaler(data=quadrato_distanza)
+scaled_rapporto_distanza=utils.processore.log_scaler(data=rapporto_distanza)
+scaled_forza_elettrica=utils.processore.log_scaler(data=np.absolute(forza_elettrica))
 
 #separazione del dataset in features e labels
 data_features=np.column_stack((scaled_quadrato_distanza, scaled_prodotto_cariche))
 data_targets=scaled_forza_elettrica
 
-
-#plottare i dati puri rumurosi
-plt.figure(figsize=(12, 8))
-plt.scatter(df["distanza (m)"].values, y=df["forza (N)"].values, alpha=0.7, c="mediumblue", label="dati puri rumurosi")
-plt.title("Analisi del contenuto del dataset")
+#plottare la distanza contro la forza elettrica e la variazione del prodotto tra le cariche
+plt.figure(figsize=(16, 12))
+plt.subplot(211)
+sc=plt.scatter(df_bilanciato["distanza (m)"].values, df_bilanciato["forza (N)"].values, c=np.log10(prodotto_cariche), cmap="plasma", s=40)
+plt.yscale("log")
+plt.colorbar(sc, label='prodotto_cariche |q1 * q2|')
+plt.title("Distribuizione della forza rispetto le cariche")
 plt.xlabel("distanza (m^2)")
 plt.ylabel("Forza (N)")
 plt.grid(True)
-plt.show()
 
-
-#plottare la distanza contro la forza elettrica e il valore del prodotto tra le cariche
-plt.figure(figsize=(12, 8))
-sc=plt.scatter(df["distanza (m)"].values, df["forza (N)"].values, c=np.log10(np.abs(prodotto_cariche)), cmap="plasma", s=40, alpha=0.7)
-plt.colorbar(sc, label='prodotto assulto tra le cariche legge: |q1 * q2|')
-plt.yscale("log")
-plt.title("Analisi della distribuizione della potenza delle cariche")
+plt.subplot(212)
+plt.scatter(df_bilanciato["distanza (m)"].values, df_bilanciato["forza (N)"].values, c="mediumblue", s=40, alpha=0.6)
+plt.title("Distribuizione della forza rispetto alla distanza")
 plt.xlabel("distanza (m^2)")
-plt.ylabel("Forza normalizzata (N / C²))")
+plt.ylabel("Forza (N)")
+plt.suptitle("Analisi della distribuizione della forza e della potenza delle cariche")
 plt.grid(True)
-plt.show()
-
-
-#plottare la relazione 1/r^2 che la rete dovra apprendere
-plt.figure(figsize=(12, 8))
-plt.scatter(scaled_quadrato_distanza, scaled_forza_elettrica, c="orange", alpha=0.7, label="F~=1/r^2")
-plt.title("Legame tra la distanza e la forza elettrica compiuta tra le cariche")
-plt.xlabel("rapporto quadrato della distanza (1/r^2)")
-plt.ylabel("logaritmo della norma della forza")
-plt.grid(True)
-plt.legend()
 plt.show()
 
 
 #instanziare il modello di rete neurale, con tutti i parametri
-NeuralNet=nn.Architettura(nn_layers=[2, 8, 16, 16, 8, 1], init_pesi="He", epochs=500,
-                                        features=data_features, targets=data_targets, learning_rate=5e-3, 
+NeuralNet=nn.Architettura(nn_layers=[2, 8, 32, 32, 8, 1], init_pesi="He", epochs=150,
+                                        X_train=data_features, y_train=data_targets, learning_rate=5e-3, 
                                         ottimizzattore="Adagrad", funzione_perdita="MSE", attivazione="leaky_ReLU")
-
-#istanziare l'oggetti per organizzazione e processamento dei dati
+#istanziare l'oggetti per l'organizzazione e processamento dei dati
 metriche=utils.Metriche(dataset=data_path, modello=NeuralNet)
 
 #allenare e valutare il modello con la validazione incrociata
-K_folds=5
-metriche.cross_validation(K=K_folds, features=data_features, targets=data_targets)
+metriche.cross_validation(K_folds=5, features=data_features, targets=data_targets)
 forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df["Carica_1 (C)"].values, q2=df["Carica_2 (C)"].values, dist=df["distanza (m)"].values)
+Reg_coulomb=NeuralNet.migliore_modello
 
-
-
-predizioni=NeuralNet.predict(inputs=metriche.x_test)
+predizioni=Reg_coulomb.predict(inputs=metriche.x_test)
 plt.figure(figsize=(10, 6))
 plt.scatter(metriche.x_test[:, 1], metriche.y_test, s=25, c="mediumblue", label=f"dati dataset")
 plt.scatter(metriche.x_test[:, 1], predizioni, s=25, c="orangered", label=f"predizioni modello")
@@ -112,31 +111,18 @@ plt.legend()
 plt.show()
 
 
-n_folds=np.arange(0, len(metriche.test_errori), 1)
-media_errore_folds=[np.mean(i) for i in metriche.test_errori]
-plt.figure(figsize=(12, 8))
-plt.bar(n_folds, media_errore_folds, color="navy", label="Errore per fold")
-plt.title("Analise Validazione-incrociata")
-plt.xlabel("K-folds")
-plt.ylabel("Errore complessivo")
-plt.grid(True)
-plt.legend()
-plt.show()
+#elaborazione delle predizioni
+predizioni_log=Reg_coulomb.predict(inputs=data_features)
+#predizioni=10 ** predizioni_log
+#Forza=df["forza (N)"].values / np.absolute(prodotto_cariche)
 
-#elaborazione
-predizioni_log=NeuralNet.predict(inputs=data_features)
-predizioni=np.power(10, predizioni_log)
-segni=np.sign(forza_elettrica)
-predizioni=predizioni.flatten() * segni.flatten()
-Forza=df["forza (N)"].values / np.absolute(prodotto_cariche)
 
-print(f"preds: {predizioni.shape} Forza: {Forza.shape}")
 plt.figure(figsize=(12, 8))
-plt.scatter(df["distanza (m)"].values, Forza, c="mediumblue", alpha=0.4, label="dati rumurosi")
-plt.scatter(df["distanza (m)"].values, predizioni, alpha=0.7, c="limegreen", label="predizioni del modello")
-plt.title("Analise Prestazione modello")
+plt.scatter(df_bilanciato["distanza (m)"].values, np.absolute(df_bilanciato["forza (N)"].values), c="mediumblue", alpha=0.6, label="dati puri bilanciati")
+plt.scatter(df_bilanciato["distanza (m)"].values, predizioni_log, c="limegreen", label="predizioni del modello")
+plt.title("Analise della Prestazione del modello")
 plt.xlabel("Distanza (m^2)")
-plt.ylabel("F_norm=Forza / |q1 * q2|")
+plt.ylabel("Forza (N)")
 plt.grid(True)
 plt.legend()
 plt.show()

@@ -1,8 +1,9 @@
 import numpy as np # type: ignore
-import matplotlib.pyplot as plt # type: ignore
+
 
 class SommaPesata:
-    def __init__(self, bias, pesi):
+    def __init__(self, autodiff, bias, pesi):
+        self.autodiff=autodiff
         self.operazione="somma_pesata"
         self.pesi=pesi
         self.bias=bias
@@ -14,12 +15,13 @@ class SommaPesata:
             return self.nn_derivata_sommaPesata(layer=strato)
 
     def nn_SommaPesata(self, inputs, layer:int):
-        #print(f"pesi type: {type(self.pesi[layer])} features type: {type(inputs.shape)} bias type: {type(self.bias[layer])}")
-        #print(f"pesi shape: {self.pesi[layer].shape} features shape: {inputs.shape} bias shape: {self.bias[layer].shape}")
+        #print(f"features type: {type(inputs.shape)} pesi type: {type(self.pesi[layer])} bias type: {type(self.bias[layer])}")
+        #print(f"features shape: {inputs.shape} pesi shape: {self.pesi[layer].shape} bias shape: {self.bias[layer].shape}")
         pesi=self.pesi[layer]
         bias=self.bias[layer]
         out_features=np.matmul(inputs, pesi) + bias
         #print(f"out_features shape: {out_features.shape}")
+        self.autodiff.memorizzare(strato=layer, inputs=inputs, outputs=out_features, operazione="somma_pesata")
         return out_features
             
     
@@ -30,47 +32,50 @@ class SommaPesata:
 
 
 class attivazione:
-    def __init__(self, type):
+    def __init__(self, autodiff, type):
+        self.autodiff=autodiff
         self.operazione="attivazione"
         self.type=type
 
-    def func(self, inputs, type:str, derivata:bool):
+    def func(self, inputs, strato, type:str, derivata:bool):
         if type == "ReLU":
             if (not derivata):
-                return self.activation_ReLU(Z=inputs)
+                return self.activation_ReLU(Z=inputs, layer=strato)
             else:
                 return self.activation_ReLU_derivative(Z=inputs)
         elif type == "leaky_ReLU":
             if(not derivata):
-                return self.activation_leaky_ReLU(Z=inputs)
+                return self.activation_leaky_ReLU(Z=inputs, layer=strato)
             else:
                 return self.activation_leaky_ReLU_derivative(Z=inputs)
         elif type == "Sigmoid":
             if (not derivata):
-                return self.activation_Sigmoid(Z=inputs)
+                return self.activation_Sigmoid(Z=inputs, layer=strato)
             else: 
                 return self.activation_Sigomid_derivative(Z=inputs)
         elif type == "Tanh":
             if (not derivata):
-                return self.activation_tanh(Z=inputs)
+                return self.activation_tanh(Z=inputs, layer=strato)
             else: 
-                return self.activation_tanh_derivative(Z=inputs)
+                return self.activation_tanh_derivative(Z=inputs, layer=strato)
         else:
             raise ValueError(f"la funzione {type} non e supportata")
 
     #ReLU function ativazione
-    def activation_ReLU(self, Z):
-        result=np.maximum(0, Z)
-        return result
+    def activation_ReLU(self, Z, layer):
+        output=np.maximum(0, Z)
+        self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=output, operazione="attivazione")
+        return output
 
     def activation_ReLU_derivative(self, Z):
         output=np.where(Z > 0, 1, 0)
         return output
 
     #Leaky ReLU variant ativazione
-    def activation_leaky_ReLU(self, Z, alpha=0.03):
+    def activation_leaky_ReLU(self, Z, layer, alpha=0.03):
         #print(f"attivazione shape: {Z.shape}")
         output=np.where(Z >= 0, Z, alpha * Z)
+        self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=output, operazione="attivazione")
         return output
 
     def activation_leaky_ReLU_derivative(self, Z, alpha=0.03):
@@ -79,8 +84,9 @@ class attivazione:
         return output
 
     #Sigmoid function ativazione
-    def activation_Sigmoid(self, Z):
+    def activation_Sigmoid(self, Z, layer):
         output= 1 / (1 + np.exp(-Z))
+        self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=output, operazione="attivazione")
         return output
 
     def activation_Sigomid_derivative(self, Z):
@@ -89,16 +95,18 @@ class attivazione:
         return output
 
     #Tanh function ativazione
-    def activation_tanh(self, Z):
+    def activation_tanh(self, Z, layer):
         output=np.sinh(Z)/np.cosh(Z)
+        self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=output, operazione="attivazione")
         return output
 
-    def activation_tanh_derivative(self, Z):
-        return 1-(self.activation_tanh(Z) ** 2)
+    def activation_tanh_derivative(self, Z, layer):
+        return 1-(self.activation_tanh(Z, layer) ** 2)
 
 
 class Perdita:
-    def __init__(self, type):
+    def __init__(self, autodiff, type):
+        self.autodiff=autodiff
         self.operazione="Perdita"
         self.type=type
         
@@ -167,10 +175,11 @@ class Perdita:
   
 
 class optimizers:
-    def __init__(self, alg_optim, pesi, bias, grad_pesi, grad_bias):
+    def __init__(self, autodiff, alg_optim, pesi, bias):
+        self.autodiff=autodiff
         self.optim=alg_optim
-        self.gradiente_pesi=grad_pesi
-        self.gradiente_bias=grad_bias
+        self.gradiente_pesi=self.autodiff.gradiente_pesi
+        self.gradiente_bias=self.autodiff.gradiente_bias
         self.grad_pesi_anteriore=[np.zeros_like(p)for p in pesi]
         self.grad_bias_anteriore=[np.zeros_like(b)for b in bias]
 

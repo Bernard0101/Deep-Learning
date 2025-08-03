@@ -5,7 +5,7 @@
             "name": "Python Debugger: Classification test",
             "type": "debugpy",
             "request": "launch",
-            "module": "modelli.test",
+            "module": "modelli.Classificazione_Matteriali",
             "cwd": "${workspaceFolder}",
             "justMyCode": true
 

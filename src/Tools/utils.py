@@ -13,9 +13,9 @@ class Metriche:
         self.dataset=pd.read_csv(dataset)
         self.train_errori=[]
         self.test_errori=[]
-        self.x_train=None
+        self.X_train=None
         self.y_train=None
-        self.x_test=None
+        self.X_test=None
         self.y_test=None
 
 
@@ -27,10 +27,10 @@ class Metriche:
         self.y_test=labels[split:]
 
 
-    def cross_validation(self, K:int, features:np.ndarray, targets:np.ndarray):
+    def cross_validation(self, K_folds:int, features:np.ndarray, targets:np.ndarray):
 
         #crea un numero specifico che divide ugualmente tutti elementi dello dataset
-        fold_size=len(features) // K
+        fold_size=len(features) // K_folds
 
         #mescola i dati ogni volta che e necessario esseguire una nuova validazione
         indices=np.arange(len(features))
@@ -38,39 +38,50 @@ class Metriche:
         features, targets=np.array(features[indices]), np.array(targets[indices])
 
         #crea una lista dove ogni elemento di essa e un'altra lista contenente fold size elementi 
-        feature_folds=[features[i*fold_size:fold_size*(i+1)]for i in range(K)]
-        target_folds=[targets[i*fold_size:fold_size*(i+1)]for i in range(K)]
+        feature_folds=[features[i*fold_size:fold_size*(i+1)]for i in range(K_folds)]
+        target_folds=[targets[i*fold_size:fold_size*(i+1)]for i in range(K_folds)]
 
 
         #allenare e testare il modello
-        for i in range(K-1):
-            X_train=feature_folds[i]
-            y_train=target_folds[i]
+        for i in range(K_folds):
+            print(f"==============================================================================\nAlleno {i}")
+            self.X_test=feature_folds[i]
+            self.y_test=target_folds[i]
 
-            #ognuno di essi ha una misura uguale a len(features) // K
-            print(f"=====================================\nAlleno: {i+1}")
-            self.modello.features=X_train
-            self.modello.targets=y_train
+            self.X_train=np.concatenate([feature_folds[j] for j in range(len(feature_folds)) if j != i])
+            self.y_train=np.concatenate([target_folds[j] for j in range(len(target_folds)) if j != i])
+            print(f"X_train: {self.X_train.shape} y_train: {self.y_train.shape}")
+            print(f"X_test: {self.X_test.shape} y_test: {self.y_test.shape}")
+
+            self.modello.X_train=self.X_train
+            self.modello.y_train=self.y_train
+            self.modello.X_test=self.X_test
+            self.modello.y_test=self.y_test
             self.modello.Allenare()
-            self.train_errori.append(self.modello.errori)    
 
-        print(f"=====================================\nAlleno: {K}")
-        self.x_test=feature_folds[K-1]
-        self.y_test=target_folds[K-1]
-        self.modello.features=self.x_test
-        self.modello.targets=self.y_test
-        self.modello.Allenare()
-        self.test_errori.append(self.modello.errori)
+
+        #plottare il l'errore medio per ogni allendo folder
+        n_folds=np.arange(0, len(self.train_errori) + len(self.test_errori), 1)
+        media_errore_folds_train=[np.mean(i) for i in self.train_errori]
+        media_errore_train_test=[np.mean(i) for i in self.test_errori]
+        media_errore_complessivo=media_errore_folds_train + media_errore_train_test
+        plt.figure(figsize=(12, 8))
+        plt.bar(n_folds, media_errore_complessivo, color="navy", label="Errore per fold")
+        plt.title("Analise Validazione-incrociata")
+        plt.xlabel("K-folds")
+        plt.ylabel("Errore complessivo")
+        plt.grid(True)
+        plt.legend()
+        plt.show()
 
 
         #plottare l'errore del modello in ogni epoca per ogni fold della validazione incrociata
-        totale_epoche_testing=np.arange(0, len(self.test_errori[0]), 1)
         fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
         for i, ax in enumerate(asse.flatten()):
             limite=min(len(self.train_errori[i]), len(self.test_errori[0]))
             totale_epoche=np.arange(0, limite, 1)
             ax.plot(totale_epoche, self.train_errori[i][:limite], lw=5, c="red", label=f"dati di allenamento fold: {i+1}")
-            ax.plot(totale_epoche, self.test_errori[0][:limite], lw=5, c="cornflowerblue", label=f"dati di valutazione fold: {K}")
+            ax.plot(totale_epoche, self.test_errori[0][:limite], lw=5, c="cornflowerblue", label=f"dati di valutazione fold: {K_folds}")
             ax.set_title(f"Errore folder {i+1}")
             ax.set_xlabel("Iterazioni (epoche)")
             ax.set_ylabel(f"funzione costo: {self.modello.loss_fn}")
