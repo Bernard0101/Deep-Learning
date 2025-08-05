@@ -37,29 +37,29 @@ class attivazione:
         self.operazione="attivazione"
         self.type=type
 
-    def func(self, inputs, strato, type:str, derivata:bool):
-        if type == "ReLU":
+    def func(self, inputs, strato, derivata):
+        if self.type == "ReLU":
             if (not derivata):
                 return self.activation_ReLU(Z=inputs, layer=strato)
             else:
                 return self.activation_ReLU_derivative(Z=inputs)
-        elif type == "leaky_ReLU":
+        elif self.type == "leaky_ReLU":
             if(not derivata):
                 return self.activation_leaky_ReLU(Z=inputs, layer=strato)
             else:
                 return self.activation_leaky_ReLU_derivative(Z=inputs)
-        elif type == "Sigmoid":
+        elif self.type == "Sigmoid":
             if (not derivata):
                 return self.activation_Sigmoid(Z=inputs, layer=strato)
             else: 
-                return self.activation_Sigomid_derivative(Z=inputs)
-        elif type == "Tanh":
+                return self.activation_Sigomid_derivative(Z=inputs, layer=strato)
+        elif self.type == "Tanh":
             if (not derivata):
                 return self.activation_tanh(Z=inputs, layer=strato)
             else: 
                 return self.activation_tanh_derivative(Z=inputs, layer=strato)
         else:
-            raise ValueError(f"la funzione {type} non e supportata")
+            raise ValueError(f"la funzione: {self.type}, non e supportata")
 
     #ReLU function ativazione
     def activation_ReLU(self, Z, layer):
@@ -89,8 +89,8 @@ class attivazione:
         self.autodiff.memorizzare(strato=layer, inputs=Z, outputs=output, operazione="attivazione")
         return output
 
-    def activation_Sigomid_derivative(self, Z):
-        s=self.activation_Sigmoid(Z)
+    def activation_Sigomid_derivative(self, Z, layer):
+        s=self.activation_Sigmoid(Z, layer=layer)
         output= s * (1-s)
         return output
 
@@ -110,29 +110,29 @@ class Perdita:
         self.operazione="Perdita"
         self.type=type
         
-    def func(self, y_pred, y_target, derivata, type=type):
-        if type == "MAE":
+    def func(self, y_pred, y_target, derivata):
+        if self.type == "MAE":
             if (not derivata):
                 return self.Loss_MAE(y_label=y_target, y_pred=y_pred)
             else:
                 return self.Loss_MAE_derivative(y_label=y_target, y_pred=y_pred)
-        elif type == "MSE":
+        elif self.type == "MSE":
             if (not derivata):
                 return self.Loss_MSE(y_label=y_target, y_pred=y_pred)
             else: 
                 return self.Loss_MSE_derivative(y_label=y_target, y_pred=y_pred)
-        elif type == "BCE":
+        elif self.type == "BCE":
             if (not derivata):
                 return self.Loss_BCE(y_label=y_target, y_pred=y_pred)
             else:
                 return self.Loss_BCE_derivative(y_label=y_target, y_pred=y_pred)
-        elif type == "CCE":
+        elif self.type == "CCE":
             if(not derivata):
                 return self.Loss_CCE(y_label=y_target, y_pred=y_pred)
             else:
                 return self.Loss_CCE_derivative(y_label=y_target, y_pred=y_pred)
         else:
-            raise ValueError(f"funzione di costo {type}, non supportata")
+            raise ValueError(f"funzione di costo: {self.type}, non e supportata")
 
  #mse Loss
     def Loss_MSE(self, y_pred, y_label):
@@ -182,14 +182,18 @@ class optimizers:
         self.gradiente_bias=self.autodiff.gradiente_bias
         self.grad_pesi_anteriore=[np.zeros_like(p)for p in pesi]
         self.grad_bias_anteriore=[np.zeros_like(b)for b in bias]
+        self.moving_average_gradiente_pesi=[np.zeros_like(p)for p in pesi]
+        self.moving_average_gradiente_bias=[np.zeros_like(b)for b in bias]
 
-    def func(self, pesi, bias, lr, type):
-        if type == "SGD":
+    def algorithm(self, pesi, bias, lr):
+        if self.optim == "SGD":
             self.optimizer_SGD(pesi=pesi, bias=bias, lr=lr)
-        elif type == "Adagrad":
+        elif self.optim == "Adagrad":
             self.optimizer_Adagrad(pesi=pesi, bias=bias, lr=lr)
+        elif self.optim == "RMSprop":
+            self.optimizer_RMSprop(pesi=pesi, bias=bias, lr=lr, beta=0.95)
         else:    
-            raise ValueError(f"ottimizzattore: {type} non supportato")
+            raise ValueError(f"ottimizzattore: {self.optim} non supportato")
             
 
     #gli algoritmi di otimizazzione per addestramento dei pesi
@@ -199,18 +203,34 @@ class optimizers:
            pesi[i] -= self.gradiente_pesi[i] * lr
            bias[i] -= self.gradiente_bias[i] * lr
     
+
     def optimizer_Adagrad(self, pesi, bias, lr):
-        for i in reversed(range(len(pesi)-1)):
+        for i in reversed(range(len(pesi))):
             gradiente_pesi_accumulato=self.grad_pesi_anteriore[i] + np.power(self.gradiente_pesi[i], 2)
             gradiente_bias_accumulato=self.grad_bias_anteriore[i] + np.power(self.gradiente_bias[i], 2)
             #print(f"grad_pesi accumulato: {gradiente_pesi_accumulato.shape} grad_pesi: {self.gradiente_pesi[i].shape}")
             #print(f"grad_bias accumulato: {gradiente_bias_accumulato.shape} grad_bias: {self.gradiente_bias[i].shape}")
             #print(f"pesi: {pesi[i].shape} grad_pesi_accumulato: {gradiente_pesi_accumulato[i].shape}")
             #print(f"bias: {bias[i].shape} grad_bias_accumulato: {gradiente_bias_accumulato[i].shape}")
-            pesi[i] -= lr / np.sqrt(gradiente_pesi_accumulato + 3e-6) * self.gradiente_pesi[i]
-            bias[i] -= lr / np.sqrt(gradiente_bias_accumulato + 3e-6) * self.gradiente_bias[i]
+            pesi[i] -= lr / np.sqrt(gradiente_pesi_accumulato + 3e-9) * self.gradiente_pesi[i]
+            bias[i] -= lr / np.sqrt(gradiente_bias_accumulato + 3e-9) * self.gradiente_bias[i]
             self.grad_pesi_anteriore[i]=gradiente_pesi_accumulato
             self.grad_bias_anteriore[i]=gradiente_bias_accumulato
+
+
+    def optimizer_RMSprop(self, pesi, bias, lr, beta):
+        for i in reversed(range(len(pesi))):
+            #print(f"moving_average_pesi: {self.moving_average_gradiente_pesi[i].shape} gradiente_pesi: {self.gradiente_pesi[i].shape}")
+            #print(f"moving_average_bias: {self.moving_average_gradiente_bias[i].shape} gradiente_bias: {self.gradiente_bias[i].shape}")
+            moving_average_gradiente_pesi=beta * self.moving_average_gradiente_pesi[i] + (1-beta) * np.power(self.gradiente_pesi[i], 2)
+            moving_average_gradiente_bias=beta * self.moving_average_gradiente_bias[i] + (1-beta) * np.power(self.gradiente_bias[i], 2)
+            pesi[i] -= lr / np.sqrt(moving_average_gradiente_pesi + 3e-9) * self.gradiente_pesi[i]
+            bias[i] -= lr / np.sqrt(moving_average_gradiente_bias + 3e-9) * self.gradiente_bias[i]
+            self.moving_average_gradiente_pesi[i]=moving_average_gradiente_pesi
+            self.moving_average_gradiente_bias[i]=moving_average_gradiente_bias
+
+            
+
 
         
 

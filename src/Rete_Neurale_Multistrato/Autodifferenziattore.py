@@ -47,12 +47,12 @@ class Autodiff:
             operazione=self.passaggi[passaggio_idx]["operazione"]
 
             if operazione == "Perdita":
-                gradiente_loss=self.Perdita.func(y_pred=predizioni, y_target=targets, type=self.loss_fn, derivata=True)
+                gradiente_loss=self.Perdita.func(y_pred=predizioni, y_target=targets, derivata=True)
 
             elif operazione == "attivazione":
                 attivazioni_precedenti=self.passaggi[passaggio_idx-2]["inputs"]
                 Z=self.passaggi[passaggio_idx]["inputs"] 
-                gradiente_attivazione=self.attivazione.func(inputs=Z, strato=strato, type=self.activation_fn, derivata=True)
+                gradiente_attivazione=self.attivazione.func(inputs=Z, strato=strato, derivata=True)
 
             elif operazione == "somma_pesata":
                 if strato == self.strati:

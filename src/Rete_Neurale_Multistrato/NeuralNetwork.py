@@ -63,21 +63,20 @@ class Architettura:
             #print(f"strato: {layer}")
             if layer == 0:
                 Z=self.SommaPesata.func(inputs=inputs, strato=layer, derivata=False)
-                out_features=self.attivazione.func(inputs=Z, strato=layer, type=self.activation_fn, derivata=False)
+                out_features=self.attivazione.func(inputs=Z, strato=layer, derivata=False)
 
             elif layer > 0 and layer != len(self.nn_layers)-1: 
                 Z=self.SommaPesata.func(inputs=out_features, strato=layer, derivata=False)
-                out_features=self.attivazione.func(inputs=Z, strato=layer, type=self.activation_fn, derivata=False)
+                out_features=self.attivazione.func(inputs=Z, strato=layer, derivata=False)
             else:
                 Z=self.SommaPesata.func(inputs=out_features, strato=layer, derivata=False)
-                predizione=self.attivazione.func(inputs=Z, strato=layer, type=self.activation_fn, derivata=False)
-
+                predizione=self.attivazione.func(inputs=Z, strato=layer, derivata=False)
 
         return predizione
     
     #implementa un modulo per calcolare lo sbaglio del modello basato in una metrica di avaluazione pre-scelta
     def Perdita(self, predizioni:np.ndarray, targets):
-        loss=self.perdita.func(y_pred=predizioni, y_target=targets, type=self.loss_fn, derivata=False)
+        loss=self.perdita.func(y_pred=predizioni, y_target=targets, derivata=False)
         self.autodiff.memorizzare(strato=(len(self.nn_layers)-1), inputs=[predizioni, targets], outputs=loss, operazione="Perdita")
         return loss
         
@@ -85,7 +84,7 @@ class Architettura:
     #implementa il modulo di Backpropagazione dove si addestrano i pesi della rete basatto in un'otimizzatore pre-scelto
     def Backward(self, features, targets, predizioni):
         self.autodiff.retropropagazione(predizioni=predizioni, targets=targets, features=features)
-        self.optimizer.func(pesi=self.pesi, bias=self.bias, lr=self.lr, type=self.optim)
+        self.optimizer.algorithm(pesi=self.pesi, bias=self.bias, lr=self.lr)
       
 
     def reset_parametri(self):
@@ -96,48 +95,54 @@ class Architettura:
         self.autodiff.passaggi=[]
         self.train_errori=[]
         self.test_errori=[]
+        self.epoche=[]
 
     def salvare_modello(self, epoca, patience):
         if epoca > patience:
-            migliore_alleno=min(self.errori[:epoca])
-            if self.errori[epoca] < migliore_alleno:
-                self.migliore_modello=self
+           self.migliore_modello=self
 
-    def early_stop(self, epoca, patience, min_delta=-1e-3):
+
+    def early_stop(self, epoca, patience, min_delta=-5e-2):
         if epoca < patience:
             return False
 
-        migliore_alleno=min(self.train_errori[epoca - patience:epoca])
+        migliore_alleno=min(self.train_errori[(epoca-patience):epoca])
         current=self.train_errori[epoca]
-        if migliore_alleno - current < min_delta or np.isnan(current):
+        differenza=migliore_alleno - current
+        if differenza < min_delta or np.isnan(current):
             return True
         return False        
 
 
-    def allenare(self): 
-        y_pred=self.Forward(inputs=self.X_train)
+    def allenare(self, inputs): 
+        y_pred=self.Forward(inputs=inputs)
         loss=self.Perdita(predizioni=y_pred, targets=self.y_train)
         self.Backward(features=self.X_train, targets=self.y_train, predizioni=y_pred)
         self.train_errori.append(loss)
         return loss
 
-    def valutare(self):
-        y_pred=self.Forward(inputs=self.X_test)
+    def valutare(self, inputs):
+        y_pred=self.Forward(inputs=inputs)
         loss=self.Perdita(predizioni=y_pred, targets=self.y_test)
         self.autodiff.passaggi=[]
         self.test_errori.append(loss)
-        return loss
+        return y_pred
     
     #loop di addestramento della rete d'accordo con la quantita di epoche
     def Allenare(self):
         self.reset_parametri()
         self.initializzare_pesi(init_pesi=self.inizializzazione)
         for epoch in range(self.epochs):
-            loss_alleno=self.allenare()
-            loss_valutazione=self.valutare()
-            print(f"epoca: {epoch}| loss alleno: {loss_alleno} | loss valutazione {loss_valutazione}")
-            #if(self.early_stop(epoca=epoch, patience=15)):
-             #   break
+            self.allenare(inputs=self.X_train)
+            self.valutare(inputs=self.X_test)
+            self.epoche.append(epoch)
+            print(f"epoca: {epoch}| loss alleno: {self.train_errori[epoch]} | loss valutazione {self.test_errori[epoch]}")
+            if(self.early_stop(epoca=epoch, patience=30)):
+                self.salvare_modello(epoca=epoch, patience=30)  
+                return 
+        self.salvare_modello(epoca=epoch, patience=30)
+        
+        
 
     
     

@@ -31,7 +31,7 @@ del df["q1_unita"]
 del df["q2_unita"]
 
 #applicare undersamppling ai dati della forza piu vicini a zero
-forze_bilanciate=(df["forza (N)"] <= -6e-2) | (df["forza (N)"] >= 6e-2)
+forze_bilanciate=(df["forza (N)"] <= -3e-2) | (df["forza (N)"] >= 3e-2)
 df_bilanciato=df[forze_bilanciate]
 print(df_bilanciato.head())
 
@@ -63,8 +63,17 @@ scaled_rapporto_distanza=utils.processore.log_scaler(data=rapporto_distanza)
 scaled_forza_elettrica=utils.processore.log_scaler(data=np.absolute(forza_elettrica))
 
 #separazione del dataset in features e labels
-data_features=np.column_stack((scaled_quadrato_distanza, scaled_prodotto_cariche))
+data_features=np.column_stack((scaled_rapporto_distanza, scaled_prodotto_cariche))
 data_targets=scaled_forza_elettrica
+
+#plottare la relazione che sara introdota come input alla rete
+plt.figure(figsize=(12, 8))
+plt.scatter(scaled_quadrato_distanza, scaled_forza_elettrica, c="orange")
+plt.title("Visualizzazione inputs alla rete")
+plt.xlabel("log-quadrato-distanza log(r^2)")
+plt.ylabel("log prodotto assoluto cariche log|q1 * q2|")
+plt.grid(True)
+plt.show()
 
 #plottare la distanza contro la forza elettrica e la variazione del prodotto tra le cariche
 plt.figure(figsize=(16, 12))
@@ -88,38 +97,31 @@ plt.show()
 
 
 #instanziare il modello di rete neurale, con tutti i parametri
-NeuralNet=nn.Architettura(nn_layers=[2, 8, 32, 32, 8, 1], init_pesi="He", epochs=150,
-                                        X_train=data_features, y_train=data_targets, learning_rate=5e-3, 
-                                        ottimizzattore="Adagrad", funzione_perdita="MSE", attivazione="leaky_ReLU")
+NeuralNet=nn.Architettura(nn_layers=[2, 4, 4, 1], init_pesi="He", epochs=1000,
+                                        X_train=data_features, y_train=data_targets, learning_rate=5e-4, 
+                                        ottimizzattore="Adagrad", funzione_perdita="MSE", attivazione="Tanh")
+
 #istanziare l'oggetti per l'organizzazione e processamento dei dati
 metriche=utils.Metriche(dataset=data_path, modello=NeuralNet)
 
 #allenare e valutare il modello con la validazione incrociata
-metriche.cross_validation(K_folds=5, features=data_features, targets=data_targets)
+metriche.cross_validation(K_folds=4, features=data_features, targets=data_targets)
 forza_elettrica=PIML.Fisica.Forza_elettrica_leggeCoulomb(q1=df["Carica_1 (C)"].values, q2=df["Carica_2 (C)"].values, dist=df["distanza (m)"].values)
 Reg_coulomb=NeuralNet.migliore_modello
 
-predizioni=Reg_coulomb.predict(inputs=metriche.x_test)
-plt.figure(figsize=(10, 6))
-plt.scatter(metriche.x_test[:, 1], metriche.y_test, s=25, c="mediumblue", label=f"dati dataset")
-plt.scatter(metriche.x_test[:, 1], predizioni, s=25, c="orangered", label=f"predizioni modello")
-plt.title("Errore Test Fold")
-plt.xlabel("distanza in metri")
-plt.ylabel("forza in newtons")
-plt.grid(True)
-plt.legend()
-plt.show()
 
 
 #elaborazione delle predizioni
-predizioni_log=Reg_coulomb.predict(inputs=data_features)
-#predizioni=10 ** predizioni_log
-#Forza=df["forza (N)"].values / np.absolute(prodotto_cariche)
+predizioni_log_assolute=Reg_coulomb.valutare(inputs=data_features)
+predizioni_assolute=10 ** predizioni_log_assolute
+segni=np.sign(prodotto_cariche)
+predizioni=predizioni_assolute.flatten() * segni.flatten()
+#Forza=df_bilanciato["forza (N)"].values / np.absolute(prodotto_cariche)
 
 
 plt.figure(figsize=(12, 8))
-plt.scatter(df_bilanciato["distanza (m)"].values, np.absolute(df_bilanciato["forza (N)"].values), c="mediumblue", alpha=0.6, label="dati puri bilanciati")
-plt.scatter(df_bilanciato["distanza (m)"].values, predizioni_log, c="limegreen", label="predizioni del modello")
+plt.scatter(df_bilanciato["distanza (m)"].values, df_bilanciato["forza (N)"].values, c="mediumblue", alpha=0.6, label="dati puri bilanciati")
+plt.scatter(df_bilanciato["distanza (m)"].values, predizioni, c="limegreen", label="predizioni del modello")
 plt.title("Analise della Prestazione del modello")
 plt.xlabel("Distanza (m^2)")
 plt.ylabel("Forza (N)")

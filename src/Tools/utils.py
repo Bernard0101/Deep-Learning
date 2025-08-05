@@ -11,6 +11,7 @@ class Metriche:
     def __init__(self, modello, dataset):
         self.modello=modello
         self.dataset=pd.read_csv(dataset)
+        self.epoche=[]
         self.train_errori=[]
         self.test_errori=[]
         self.X_train=None
@@ -44,7 +45,7 @@ class Metriche:
 
         #allenare e testare il modello
         for i in range(K_folds):
-            print(f"==============================================================================\nAlleno {i}")
+            print(f"==============================================================================\nAlleno {i+1}")
             self.X_test=feature_folds[i]
             self.y_test=target_folds[i]
 
@@ -58,36 +59,23 @@ class Metriche:
             self.modello.X_test=self.X_test
             self.modello.y_test=self.y_test
             self.modello.Allenare()
-
-
-        #plottare il l'errore medio per ogni allendo folder
-        n_folds=np.arange(0, len(self.train_errori) + len(self.test_errori), 1)
-        media_errore_folds_train=[np.mean(i) for i in self.train_errori]
-        media_errore_train_test=[np.mean(i) for i in self.test_errori]
-        media_errore_complessivo=media_errore_folds_train + media_errore_train_test
-        plt.figure(figsize=(12, 8))
-        plt.bar(n_folds, media_errore_complessivo, color="navy", label="Errore per fold")
-        plt.title("Analise Validazione-incrociata")
-        plt.xlabel("K-folds")
-        plt.ylabel("Errore complessivo")
-        plt.grid(True)
-        plt.legend()
-        plt.show()
+            self.train_errori.append(self.modello.train_errori)
+            self.test_errori.append(self.modello.test_errori)
+            self.epoche.append(self.modello.epoche)
 
 
         #plottare l'errore del modello in ogni epoca per ogni fold della validazione incrociata
         fig, asse=plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
         for i, ax in enumerate(asse.flatten()):
-            limite=min(len(self.train_errori[i]), len(self.test_errori[0]))
-            totale_epoche=np.arange(0, limite, 1)
-            ax.plot(totale_epoche, self.train_errori[i][:limite], lw=5, c="red", label=f"dati di allenamento fold: {i+1}")
-            ax.plot(totale_epoche, self.test_errori[0][:limite], lw=5, c="cornflowerblue", label=f"dati di valutazione fold: {K_folds}")
+            totale_epoche=self.modello.epoche
+            ax.plot(self.epoche[i], self.train_errori[i], lw=5, c="red", label=f"dati di allenamento")
+            ax.plot(self.epoche[i], self.test_errori[i], lw=5, c="cornflowerblue", label=f"dati di valutazione")
             ax.set_title(f"Errore folder {i+1}")
             ax.set_xlabel("Iterazioni (epoche)")
             ax.set_ylabel(f"funzione costo: {self.modello.loss_fn}")
             ax.grid(True)
             ax.legend()
-        plt.suptitle(f"Analisi Progresso Allenamento del modello, ottimizzattore: {self.modello.optim}")
+        plt.suptitle(f"Analisi Progresso Allenamento del modello\n ottimizzattore: {self.modello.optim} learning rate: {self.modello.lr}")
         plt.show()
 
 
